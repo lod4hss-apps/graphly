@@ -3,7 +3,7 @@ import os, requests
 from requests.auth import HTTPBasicAuth
 from graphly.schema.prefixes import Prefixes
 from graphly.tools.triple import prepare_triple
-from graphly.tools.uri import prepare_uri_or_value
+from graphly.tools.uri import prepare
 
 
 class Sparql: 
@@ -106,7 +106,7 @@ class Sparql:
         chunked_triples = [triples[i: i + chunk_size] for i in range(0, len(triples), chunk_size)]
 
         # Prepare the query - Graph part
-        graph_sparql_open = "GRAPH " + prepare_uri_or_value(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
+        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
         graph_sparql_close = "}" if graph_uri else ""
         
         for small_triples in chunked_triples:
@@ -149,7 +149,7 @@ class Sparql:
         triples_str = '\n                    '.join([prepare_triple(triple, prefixes.shorts() if prefixes else None) for triple in triples])
 
         # Prepare query
-        graph_sparql_open = "GRAPH " + prepare_uri_or_value(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
+        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
         graph_sparql_close = "}" if graph_uri else ""
         text = """
             # graphly.schema.sparql.delete

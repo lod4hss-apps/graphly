@@ -1,7 +1,7 @@
 from typing import List, Dict
 from graphly.schema.sparql import Sparql
 from graphly.schema.prefixes import Prefixes
-from graphly.tools.uri import prepare_uri_or_value
+from graphly.tools.uri import prepare
 
 
 class Graph:
@@ -55,7 +55,7 @@ class Graph:
         if prefixes: self.uri_long = prefixes.lengthen(uri)
         else: self.uri_long = uri
 
-        self.sparql_begin = "GRAPH " + prepare_uri_or_value(self.uri, prefixes.shorts()) + " {" if self.uri else ""
+        self.sparql_begin = "GRAPH " + prepare(self.uri, prefixes.shorts()) + " {" if self.uri else ""
         self.sparql_end = "}" if self.uri else ""
 
 
@@ -159,9 +159,9 @@ class Graph:
 
         # Build the output: add all triples
         for triple in triples:
-            s = prepare_uri_or_value(triple['s'], prefixes.shorts())
-            p = prepare_uri_or_value(triple['p'], prefixes.shorts())
-            o = prepare_uri_or_value(triple['o'], prefixes.shorts())
+            s = prepare(triple['s'], prefixes.shorts())
+            p = prepare(triple['p'], prefixes.shorts())
+            o = prepare(triple['o'], prefixes.shorts())
             content += f"{s} {p} {o} .\n"
 
         return content
@@ -181,12 +181,12 @@ class Graph:
         triples = self.dump_dict(prefixes)
 
         # Build the output: add all quads
-        graph_uri = prepare_uri_or_value(prefixes.lengthen(self.uri)) if self.uri else ''
+        graph_uri = prepare(prefixes.lengthen(self.uri)) if self.uri else ''
         content = ""
         for triple in triples:
-            s = prepare_uri_or_value(prefixes.lengthen(triple['s']))
-            p = prepare_uri_or_value(prefixes.lengthen(triple['p']))
-            o = prepare_uri_or_value(prefixes.lengthen(triple['o']))
+            s = prepare(prefixes.lengthen(triple['s']))
+            p = prepare(prefixes.lengthen(triple['p']))
+            o = prepare(prefixes.lengthen(triple['o']))
             if graph_uri: content += f"{s} {p} {o} {graph_uri} .\n"
             else: content += f"{s} {p} {o} .\n"
 

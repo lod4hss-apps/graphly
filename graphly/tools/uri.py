@@ -1,7 +1,7 @@
 from typing import List, Any
 
 
-def prepare_uri_or_value(uri_or_value: Any, prefixes_names: List[str] = []) -> str | None:
+def prepare(uri_or_value: Any, prefixes_names: List[str] = []) -> str | None:
     """
     Prepare a URI, variable, or literal value for use in a SPARQL query.
 

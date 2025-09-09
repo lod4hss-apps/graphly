@@ -2,7 +2,7 @@ import requests
 from graphly.schema.prefixes import Prefixes
 from graphly.schema.sparql import Sparql
 from graphly.tools.query import get_sparql_type
-from graphly.tools.uri import prepare_uri_or_value
+from graphly.tools.uri import prepare
 
 
 class GraphDB(Sparql):
@@ -94,7 +94,7 @@ class GraphDB(Sparql):
         # Prepare query
         url = self.url if not self.url.endswith('/sparql') else self.url.replace('/sparql', '')
         url = f"{url}/statements"
-        if named_graph_uri: url += "?context=" + prepare_uri_or_value(named_graph_uri).replace(':', '%3A').replace('/', '%2F')
+        if named_graph_uri: url += "?context=" + prepare(named_graph_uri).replace(':', '%3A').replace('/', '%2F')
         headers = {"Content-Type": "text/turtle"}
         auth = (self.username, self.password)
 

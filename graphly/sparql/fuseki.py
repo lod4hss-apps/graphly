@@ -2,7 +2,7 @@ import requests
 from graphly.schema.prefixes import Prefixes
 from graphly.schema.sparql import Sparql
 from graphly.tools.query import get_sparql_type
-from graphly.tools.uri import prepare_uri_or_value
+from graphly.tools.uri import prepare
 
 
 class Fuseki(Sparql):
@@ -91,7 +91,7 @@ class Fuseki(Sparql):
         for graph in graphs:
             
             # Prepare the extraction for a dedicated graph
-            graph_uri = prepare_uri_or_value(graph)
+            graph_uri = prepare(graph)
             offset = 0
             graph_result = []
             # Change query according to graph (if it is default one, graph clause need not to be here)
@@ -117,7 +117,7 @@ class Fuseki(Sparql):
                     break
             
             # Build the n-quads lines
-            results += [f"{prepare_uri_or_value(t['s'])} {prepare_uri_or_value(t['p'])} {prepare_uri_or_value(t['o'])} {graph_uri or ''} .".replace('  ', ' ') for t in graph_result]
+            results += [f"{prepare(t['s'])} {prepare(t['p'])} {prepare(t['o'])} {graph_uri or ''} .".replace('  ', ' ') for t in graph_result]
 
         # And make a single string
         return "\n".join(results)
