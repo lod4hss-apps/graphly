@@ -162,7 +162,7 @@ class Model:
 
         return properties
     
-    
+
     def find_class(self, class_uri: str) -> Resource | None:
         """
         Find a class in the Model by its URI.
@@ -188,8 +188,7 @@ class Model:
         if range_class_uri:
             filtered = [prop for prop in filtered if prop.range.uri == range_class_uri]
         
-
-        return next((prop for prop in filtered if prop.uri == prop_uri) and (() or ()), None)
+        return next((prop for prop in filtered if prop.uri == prop_uri), None)
 
 
     def is_prop_mandatory(self, prop_uri: str, card_of_uri: str = None) -> Property | None:
