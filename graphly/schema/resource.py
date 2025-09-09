@@ -68,9 +68,9 @@ class Resource:
             self.text = f"{self.value}"
         else: 
             self.uri = uri_or_value
-            self.label = label
-            self.comment = comment
-            self.class_uri = class_uri
+            self.label = label or None
+            self.comment = comment or None
+            self.class_uri = class_uri or None
 
     def is_value(self) -> bool:
         """

@@ -24,6 +24,7 @@ class Model:
         get_classes: Retrieves all distinct classes from the RDF graph.
         find_class: Finds a class in the model by its URI.
         get_properties: Retrieves all distinct properties from the RDF graph with correct domain and range.
+        find_property: Finds a property in the model by its URI.
         is_prop_mandatory: Checks whether a property is mandatory, optionally filtered by card.
     """
 
@@ -121,6 +122,19 @@ class Model:
             Resource | None: The matching `Resource` object if found, otherwise None.
         """
         return next((klass for klass in self.classes if klass.uri == class_uri), None)
+
+
+    def find_property(self, prop_uri: str) -> Resource | None:
+        """
+        Find a property in the resource by its URI.
+
+        Args:
+            prop_uri (str): The URI of the property to search for.
+
+        Returns:
+            Resource | None: The property with the matching URI, or None if not found.
+        """
+        return next((prop for prop in self.properties if prop.uri == prop_uri))
 
 
     def get_properties(self, graph: Graph, prefixes: Prefixes) -> List[Property]:
