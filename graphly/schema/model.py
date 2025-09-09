@@ -108,35 +108,6 @@ class Model:
         return classes
     
 
-    def find_class(self, class_uri: str) -> Resource | None:
-        """
-        Find a class in the Model by its URI.
-
-        Searches through the Model's `classes` attribute for a class whose 
-        `uri` matches the given `class_uri`.
-
-        Args:
-            class_uri (str): The URI of the class to find.
-
-        Returns:
-            Resource | None: The matching `Resource` object if found, otherwise None.
-        """
-        return next((klass for klass in self.classes if klass.uri == class_uri), None)
-
-
-    def find_property(self, prop_uri: str) -> Resource | None:
-        """
-        Find a property in the resource by its URI.
-
-        Args:
-            prop_uri (str): The URI of the property to search for.
-
-        Returns:
-            Resource | None: The property with the matching URI, or None if not found.
-        """
-        return next((prop for prop in self.properties if prop.uri == prop_uri))
-
-
     def get_properties(self, graph: Graph, prefixes: Prefixes) -> List[Property]:
         """
         Retrieve all distinct properties from the given RDF graph with accurate range types.
@@ -191,6 +162,35 @@ class Model:
 
         return properties
     
+    
+    def find_class(self, class_uri: str) -> Resource | None:
+        """
+        Find a class in the Model by its URI.
+
+        Searches through the Model's `classes` attribute for a class whose 
+        `uri` matches the given `class_uri`.
+
+        Args:
+            class_uri (str): The URI of the class to find.
+
+        Returns:
+            Resource | None: The matching `Resource` object if found, otherwise None.
+        """
+        return next((klass for klass in self.classes if klass.uri == class_uri), None)
+
+
+    def find_property(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> Property | None:
+
+        # Narrow down the properties if domain and/or range is provided
+        filtered = self.properties
+        if domain_class_uri:
+            filtered = [prop for prop in filtered if prop.domain.uri == domain_class_uri]
+        if range_class_uri:
+            filtered = [prop for prop in filtered if prop.range.uri == range_class_uri]
+        
+
+        return next((prop for prop in filtered if prop.uri == prop_uri) and (() or ()), None)
+
 
     def is_prop_mandatory(self, prop_uri: str, card_of_uri: str = None) -> Property | None:
         """
