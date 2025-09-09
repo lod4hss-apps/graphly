@@ -184,9 +184,9 @@ class Model:
         # Narrow down the properties if domain and/or range is provided
         filtered = self.properties
         if domain_class_uri:
-            filtered = [prop for prop in filtered if prop.domain.uri == domain_class_uri]
+            filtered = [prop for prop in filtered if prop.domain and prop.domain.uri == domain_class_uri]
         if range_class_uri:
-            filtered = [prop for prop in filtered if prop.range.uri == range_class_uri]
+            filtered = [prop for prop in filtered if prop.range and prop.range.uri == range_class_uri]
         
         found = next((prop for prop in filtered if prop.uri == prop_uri), None)
         return found or Property(prop_uri)
