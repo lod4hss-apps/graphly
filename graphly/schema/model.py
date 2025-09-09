@@ -84,7 +84,7 @@ class Model:
         """
         # Prepare the query
         query = f"""
-            # NoFramework.get_classes()
+            # model.get_classes
             SELECT DISTINCT
                 ?uri 
                 (COALESCE(?label_, '') as ?label)
@@ -128,7 +128,7 @@ class Model:
         """
         # Prepare the query
         query = f"""
-            # NoFramework.get_properties()
+            # model.get_properties
             SELECT distinct 
                 (COALESCE(?domain_class_uri_, '') as ?domain_class_uri)
                 ?uri 
@@ -179,7 +179,7 @@ class Model:
         return next((klass for klass in self.classes if klass.uri == class_uri), None)
 
 
-    def find_property(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> Property | None:
+    def find_property(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> Property:
 
         # Narrow down the properties if domain and/or range is provided
         filtered = self.properties
@@ -188,7 +188,8 @@ class Model:
         if range_class_uri:
             filtered = [prop for prop in filtered if prop.range.uri == range_class_uri]
         
-        return next((prop for prop in filtered if prop.uri == prop_uri), None)
+        found = next((prop for prop in filtered if prop.uri == prop_uri), None)
+        return found or Property(prop_uri)
 
 
     def is_prop_mandatory(self, prop_uri: str, card_of_uri: str = None) -> Property | None:
