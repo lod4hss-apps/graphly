@@ -2,13 +2,13 @@ from typing import Literal, Dict, Any
 
 class Resource:
     """
-    Represents a resource that can be an entity (a class is an entity), a literal, a numeric value, or a blank node.
+    Represents a resource that can be an IRI, a literal, or a blank node.
 
     Attributes:
-        resource_type (Literal['blank', 'literal', 'numeric', 'entity']):
+        resource_type (Literal['blank', 'iri', 'literal']):
             The type of the resource.
-        value (str | int | float):
-            The literal or numeric value, if applicable.
+        value (Any):
+            The value itself (URI, string, number, ...).
         uri (str):
             The URI of the resource, if applicable.
         label (str):
@@ -19,10 +19,8 @@ class Resource:
             The URI of the class this resource belongs to, if any (eg: object of rdf:type).
 
     Methods:
-        __init__(uri_or_value, label=None, comment=None, class_uri=None, resource_type='entity'):
+        __init__(value, label=None, comment=None, class_uri=None, resource_type='entity'):
             Initialize a Resource instance with the given attributes.
-        is_value() -> bool:
-            Check if the resource is a value (literal or numeric).
         get_text(comment: bool = False) -> str:
             Get a human-readable string representation of the resource, optionally including the comment.
         to_dict(prefix: str = '') -> dict:
@@ -32,61 +30,52 @@ class Resource:
     """
 
     # To define the type of resource it is
-    resource_type: Literal['blank', 'text', 'numeric', 'entity']
+    resource_type: Literal['blank', 'iri', 'literal']
 
     # Information about the resource
-    value: str | int | float
+    literal: str | int | float
     uri: str
     label: str 
     comment: str
     class_uri: str 
 
 
-    def __init__(self, uri_or_value, label: str = None, comment: str = None, class_uri: str = None, resource_type: Literal['blank', 'text', 'numeric', 'entity'] = 'entity') -> None:
+    def __init__(self, value: Any, label: str = None, comment: str = None, class_uri: str = None, resource_type: Literal['blank', 'iri', 'literal'] = 'iri') -> None:
         """
         Initialize a Resource object.
 
         Args:
-            uri_or_value (str | int | float, optional): The URI of the resource if it's an entity,
-                or the literal/numeric value if the resource is a value type. Defaults to None.
+            value (Any): The URI of the resource if it's an IRI,
+                or the literal value if the resource is a literal. Defaults to None.
             label (str, optional): A human-readable label for the resource (eg: object of rdfs:label). Defaults to None.
             comment (str, optional): Additional information or description of the resource (eg: object of rdfs:comment). Defaults to None.
-            resource_type (Literal['blank', 'literal', 'numeric', 'entity'], optional): 
+            resource_type (Literal['blank', 'iri', 'literal'], optional): 
                 Specifies the type of the resource. Defaults to 'entity'.
             class_uri (str, optional): The URI of the class this resource belongs to (if any) (eg: object of rdf:type). Defaults to None.
 
         Attributes set based on type:
-            - If the resource is a value (literal or numeric), `self.value` is set.
+            - If the resource is a literal, `self.value` is set.
             - If the resource is an entity or blank node, `self.uri`, `self.label`, `self.comment`, 
             and `self.class_uri` are set.
         """
 
         self.resource_type = resource_type
 
-        if self.is_value():
-            self.value = uri_or_value
-            self.text = f"{self.value}"
+        if self.resource_type == 'literal':
+            self.literal = value
+            self.text = f"{self.literal}"
         else: 
-            self.uri = uri_or_value
+            self.uri = value
             self.label = label or None
             self.comment = comment or None
             self.class_uri = class_uri or None
-
-    def is_value(self) -> bool:
-        """
-        Check if the resource represents a value (a literal or numeric value).
-
-        Returns:
-            bool: True if the resource_type is 'literal' or 'numeric', False otherwise.
-        """
-        return self.resource_type == 'text' or self.resource_type == 'numeric'
 
 
     def get_text(self, comment: bool = False) -> str:
         """
         Get a string representation of the resource.
 
-        For value resources (literal or numeric), returns the value as a string.
+        For literal resources, returns the literal as a string.
         For entity or blank resources, returns the label if available, otherwise the URI.
         Optionally appends the comment if `comment=True` and a comment exists.
 
@@ -97,9 +86,9 @@ class Resource:
             str: The textual representation of the resource.
         """
 
-        # If the Resource is a value, just return the value
-        if self.is_value(): 
-            return f"{self.value}"
+        # If the Resource is a literal, just returns it
+        if self.resource_type == 'literal': 
+            return f"{self.literal}"
 
         # But if it is an Entity, construct a Text
         text = f"{self.label or self.uri}"
@@ -118,14 +107,14 @@ class Resource:
             prefix (str): Optional string to prepend to each key in the dictionary.
 
         Returns:
-            dict: A dictionary containing the object's properties. Includes 'value' if the object represents a value,
+            dict: A dictionary containing the object's properties. Includes 'literal' if the object represents a literal,
                 or 'uri', 'label', 'comment', and 'class_uri' if it represents an entity.
         """
 
         # Create the properties that there is all the time
         to_return = { prefix + 'resource_type': self.resource_type }
-        # If it is a value, add the value part
-        if self.is_value(): to_return[prefix + 'value'] = self.value
+        # If it is a literal, add the literal part
+        if self.resource_type == 'literal': to_return[prefix + 'literal'] = self.literal
         # And otherwise, add the Entity part
         else: 
             to_return[prefix + 'uri'] = self.uri
@@ -149,12 +138,12 @@ class Resource:
         """
         
         resource_type = obj.get(prefix + 'resource_type', 'entity')
-        is_value = resource_type == "text" or resource_type == "numeric"
+        is_value = resource_type == "literal"
 
         # Parse the object and return a Resource instance
         return Resource(
             resource_type=resource_type,
-            uri_or_value=obj.get(prefix + 'value') if is_value else obj.get(prefix + 'uri'),
+            value=obj.get(prefix + 'literal') if is_value else obj.get(prefix + 'uri'),
             label=obj.get(prefix + 'label', None),
             comment=obj.get(prefix + 'comment', None),
             class_uri=obj.get(prefix + 'class_uri', None)
