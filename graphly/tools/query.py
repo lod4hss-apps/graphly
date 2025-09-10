@@ -26,8 +26,8 @@ def get_sparql_type(query: str) -> Literal['SELECT', 'CONSTRUCT', 'INSERT', 'DEL
     # Remove leading whitespace
     q = query.lstrip()
     
-    # Remove comments at the start
-    q = re.sub(r'^(?:\s*#.*\n)*', '', q)
+    # Remove comments
+    q = '\n'.join([line for line in q.split('\n') if not line.strip().startswith('#')])
     
     # Skip PREFIX declarations
     q = re.sub(r'^(?:\s*PREFIX\s+\w*:\s*<[^>]*>\s*)*', '', q, flags=re.IGNORECASE)
