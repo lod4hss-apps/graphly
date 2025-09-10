@@ -19,7 +19,7 @@ class Resource:
             The URI of the class this resource belongs to, if any (eg: object of rdf:type).
 
     Methods:
-        __init__(value, label=None, comment=None, class_uri=None, resource_type='entity'):
+        __init__(value, label=None, comment=None, class_uri=None, resource_type='iri'):
             Initialize a Resource instance with the given attributes.
         get_text(comment: bool = False) -> str:
             Get a human-readable string representation of the resource, optionally including the comment.
@@ -50,7 +50,7 @@ class Resource:
             label (str, optional): A human-readable label for the resource (eg: object of rdfs:label). Defaults to None.
             comment (str, optional): Additional information or description of the resource (eg: object of rdfs:comment). Defaults to None.
             resource_type (Literal['blank', 'iri', 'literal'], optional): 
-                Specifies the type of the resource. Defaults to 'entity'.
+                Specifies the type of the resource. Defaults to 'iri'.
             class_uri (str, optional): The URI of the class this resource belongs to (if any) (eg: object of rdf:type). Defaults to None.
 
         Attributes set based on type:
@@ -137,7 +137,7 @@ class Resource:
             Resource: An instance of the Resource class with properties populated from the dictionary.
         """
         
-        resource_type = obj.get(prefix + 'resource_type', 'entity')
+        resource_type = obj.get(prefix + 'resource_type', 'iri')
         is_value = resource_type == "literal"
 
         # Parse the object and return a Resource instance

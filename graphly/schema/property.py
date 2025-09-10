@@ -50,7 +50,7 @@ class Property(Resource):
             min_count (int, optional): Minimum cardinality of the property. Defaults to 0.
             max_count (int, optional): Maximum cardinality of the property. Defaults to None.
         """
-        super().__init__(uri, label, comment, "owl:Property", resource_type="entity")
+        super().__init__(uri, label, comment, 'owl:Property', resource_type='iri')
 
         self.domain = domain
         self.range = range
