@@ -116,13 +116,14 @@ class Graph:
             list[dict]: A list of dictionaries, each representing a triple with keys 's', 'p', and 'o'.
         """
         # Prepare the queries
-        query = f"""
-            # graphly.schema.graph.dump
-            SELECT ?s ?p ?o WHERE {{ {self.sparql_begin} ?s ?p ?o . {self.sparql_end} }}
-        """
         step = 5000
         result = []
         offset = 0
+        query = f"""
+            # graphly.schema.graph.dump
+            SELECT ?s ?p ?o WHERE {{ {self.sparql_begin} ?s ?p ?o . {self.sparql_end} }}
+            LIMIT {step}
+        """
 
         # Extract triples as long as they are coming
         while True:
