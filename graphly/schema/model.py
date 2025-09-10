@@ -24,7 +24,7 @@ class Model:
         get_classes: Retrieves all distinct classes from the RDF graph.
         find_class: Finds a class in the model by its URI.
         get_properties: Retrieves all distinct properties from the RDF graph with correct domain and range.
-        find_property: Finds a property in the model by its URI.
+        find_properties: Finds a list property in the model by their URI.
         is_prop_mandatory: Checks whether a property is mandatory, optionally filtered by card.
     """
 
@@ -179,8 +179,19 @@ class Model:
         return next((klass for klass in self.classes if klass.uri == class_uri), None)
 
 
-    def find_property(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> Property:
+    def find_properties(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> List[Property]:
+        """
+        Find properties matching the given URI, optionally filtered by domain and/or range.
 
+        Args:
+            prop_uri (str): The URI of the property to search for.
+            domain_class_uri (str, optional): The URI of the domain class to filter by. Defaults to None.
+            range_class_uri (str, optional): The URI of the range class to filter by. Defaults to None.
+
+        Returns:
+            List[Property]: A list of matching properties. If none are found, 
+            a new Property with the given URI is returned in a list.
+        """
         # Narrow down the properties if domain and/or range is provided
         filtered = self.properties
         if domain_class_uri:
@@ -188,8 +199,15 @@ class Model:
         if range_class_uri:
             filtered = [prop for prop in filtered if prop.range and prop.range.uri == range_class_uri]
         
-        found = next((prop for prop in filtered if prop.uri == prop_uri), None)
-        return found or Property(prop_uri)
+        # Find all properties satisfying the conditions
+        # They can be multiple because some times a class has mutiple times the same property
+        # but with different ranges
+        target = [prop for prop in filtered if prop.uri == prop_uri]
+
+        if len(target) == 0: 
+            return [Property(prop_uri)]
+        else: 
+            return target
 
 
     def is_prop_mandatory(self, prop_uri: str, card_of_uri: str = None) -> Property | None:
