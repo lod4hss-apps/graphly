@@ -64,6 +64,7 @@ class Resource:
         if self.resource_type == 'literal':
             self.literal = value
             self.text = f"{self.literal}"
+            self.class_uri = class_uri or None
         else: 
             self.uri = value
             self.label = label or None
