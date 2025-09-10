@@ -116,11 +116,9 @@ class Graph:
             list[dict]: A list of dictionaries, each representing a triple with keys 's', 'p', and 'o'.
         """
         # Prepare the queries
-        graph_begin = "GRAPH " + self.uri + " {" if self.uri else ""
-        graph_end = "}" if self.uri else ""
         query = f"""
             # graphly.schema.graph.dump
-            SELECT ?s ?p ?o WHERE {{ {graph_begin} ?s ?p ?o . {graph_end} }}
+            SELECT ?s ?p ?o WHERE {{ {self.sparql_begin} ?s ?p ?o . {self.sparql_end} }}
         """
         step = 5000
         result = []
