@@ -121,7 +121,16 @@ class Graph:
         offset = 0
         query = f"""
             # graphly.schema.graph.dump
-            SELECT ?s ?p ?o WHERE {{ {self.sparql_begin} ?s ?p ?o . {self.sparql_end} }}
+            SELECT 
+                ?s ?p ?o 
+                ?s_is_blank ?o_is_blank
+            WHERE {{ 
+                {self.sparql_begin} 
+                    ?s ?p ?o . 
+                    BIND(isBlank(?s) as ?s_is_blank)
+                    BIND(isBlank(?o) as ?o_is_blank)
+                {self.sparql_end} 
+            }}
             LIMIT {step}
         """
 
@@ -158,9 +167,18 @@ class Graph:
 
         # Build the output: add all triples
         for triple in triples:
-            s = prepare(triple['s'], prefixes.shorts())
+            # Need to save blank nodes correctly
+            if triples['s'].startswith('_:'): s = triple['s']
+            elif triple['s_is_blank'] == 'true': s = f"_:{triples['s']}"
+            else: prepare(triple['s'], prefixes.shorts())
+
             p = prepare(triple['p'], prefixes.shorts())
-            o = prepare(triple['o'], prefixes.shorts())
+
+            # Need to save blank nodes correctly
+            if triples['o'].startswith('_:'): o = triple['o']
+            elif triple['o_is_blank'] == 'true': o = f"_:{triples['o']}"
+            else: prepare(triple['o'], prefixes.shorts())
+
             content += f"{s} {p} {o} .\n"
 
         return content
@@ -180,14 +198,22 @@ class Graph:
         triples = self.dump_dict(prefixes)
 
         # Build the output: add all quads
-        graph_uri = prepare(prefixes.lengthen(self.uri)) if self.uri else ''
+        graph_uri = prepare(prefixes.lengthen(self.uri)) + ' ' if self.uri else ''
         content = ""
         for triple in triples:
-            s = prepare(prefixes.lengthen(triple['s']))
+            # Need to save blank nodes correctly
+            if triples['s'].startswith('_:'): s = triple['s']
+            elif triple['s_is_blank'] == 'true': s = f"_:{triples['s']}"
+            else: prepare(prefixes.lengthen(triple['s']))
+
             p = prepare(prefixes.lengthen(triple['p']))
-            o = prepare(prefixes.lengthen(triple['o']))
-            if graph_uri: content += f"{s} {p} {o} {graph_uri} .\n"
-            else: content += f"{s} {p} {o} .\n"
+
+            # Need to save blank nodes correctly
+            if triples['o'].startswith('_:'): o = triple['o']
+            elif triple['o_is_blank'] == 'true': o = f"_:{triples['o']}"
+            else: prepare(prefixes.lengthen(triple['o']))
+
+            content += f"{s} {p} {o} {graph_uri}.\n"
 
         return content
     
