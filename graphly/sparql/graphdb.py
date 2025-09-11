@@ -33,7 +33,7 @@ class GraphDB(Sparql):
             password (str): The password for authentication.
         """
         super().__init__(url, username, password)
-        self.name = 'GraphDB'
+        self.technology_name = 'GraphDB'
 
 
     def run(self, text: str, prefixes: Prefixes = None) -> None | list[dict]:

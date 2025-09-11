@@ -65,7 +65,7 @@ class Sparql:
 
         # Build the full query to send to sparql server
         text = '\n'.join([line.strip() for line in text.split('\n') if line.strip()]) # Strip all lines and remove empty ones
-        text = '\n'.join([p.to_sparql() for p in prefixes]) + '\n\n' + text # Add prefixes
+        text = '\n'.join([p.to_sparql() for p in prefixes]) + '\n' + text # Add prefixes
 
         # Prepare the request
         data = {query_param: text}
