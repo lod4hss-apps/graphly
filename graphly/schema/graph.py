@@ -170,14 +170,14 @@ class Graph:
             # Need to save blank nodes correctly
             if triple['s'].startswith('_:'): s = triple['s']
             elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: prepare(triple['s'], prefixes.shorts())
+            else: s = prepare(triple['s'], prefixes.shorts())
 
             p = prepare(triple['p'], prefixes.shorts())
 
             # Need to save blank nodes correctly
             if triple['o'].startswith('_:'): o = triple['o']
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: prepare(triple['o'], prefixes.shorts())
+            else: o = prepare(triple['o'], prefixes.shorts())
 
             content += f"{s} {p} {o} .\n"
 
@@ -204,14 +204,14 @@ class Graph:
             # Need to save blank nodes correctly
             if triple['s'].startswith('_:'): s = triple['s']
             elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: prepare(prefixes.lengthen(triple['s']))
+            else: o = prepare(prefixes.lengthen(triple['s']))
 
             p = prepare(prefixes.lengthen(triple['p']))
 
             # Need to save blank nodes correctly
             if triple['o'].startswith('_:'): o = triple['o']
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: prepare(prefixes.lengthen(triple['o']))
+            else: o = prepare(prefixes.lengthen(triple['o']))
 
             content += f"{s} {p} {o} {graph_uri}.\n"
 
