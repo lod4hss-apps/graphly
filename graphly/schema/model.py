@@ -176,7 +176,7 @@ class Model:
         Returns:
             Resource | None: The matching `Resource` object if found, otherwise None.
         """
-        return next((klass for klass in self.classes if klass.uri == class_uri), None)
+        return next((klass for klass in self.classes if klass.uri == class_uri), Resource(class_uri))
 
 
     def find_properties(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> List[Property]:
