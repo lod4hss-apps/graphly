@@ -20,6 +20,8 @@ class Prefixes:
             Expand a shortened URI using the appropriate prefix in the container.
         add(prefix: Prefix) -> None:
             Add a new Prefix to the container.
+        remove(short: str) -> None:
+            Remove a new Prefix from the container.
         find(short: str) -> Prefix | None:
             Find a Prefix by its short prefix.
         __len__() -> int:
@@ -89,7 +91,6 @@ class Prefixes:
         return to_return
 
 
-
     def add(self, prefix: Prefix) -> None:
         """
         Adds a new Prefix instance to the container.
@@ -98,6 +99,19 @@ class Prefixes:
             prefix (Prefix): The Prefix object to add to the list.
         """
         self.prefix_list.append(prefix)
+
+
+    def remove(self, short: str) -> None:
+        """
+        Remove a prefix from the prefix list by its short name.
+
+        Args:
+            short (str): The short name of the prefix to remove.
+
+        Returns:
+            None
+        """
+        self.prefix_list = [p for p in self.prefix_list if p.short != short]
 
 
     def find(self, short: str) -> Prefix | None:
