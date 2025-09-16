@@ -101,7 +101,7 @@ class Prefixes:
         self.prefix_list.append(prefix)
 
 
-    def remove(self, short: str, long: str) -> None:
+    def remove(self, prefix: Prefix) -> None:
         """
         Remove a prefix from the prefix list by its attributes.
 
@@ -112,7 +112,7 @@ class Prefixes:
         Returns:
             None
         """
-        self.prefix_list = [p for p in self.prefix_list if p.short != short and p.long != long]
+        self.prefix_list = [p for p in self.prefix_list if p.short != prefix.short and p.long != prefix.long]
 
 
     def find(self, short: str) -> Prefix | None:
