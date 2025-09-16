@@ -65,19 +65,6 @@ class Model:
         self.classes = self.get_classes(graph, prefixes)
         self.properties = self.get_properties(graph, prefixes)
 
-        # Has Type
-        has_has_type = len([p for p in self.properties if p.uri == self.type_property]) >= 1
-        if not has_has_type:
-            self.properties.append(Property(self.type_property, 'Has Type'))
-        # Has Label
-        has_has_label = len([p for p in self.properties if p.uri == self.label_property]) >= 1
-        if not has_has_label:
-            self.properties.append(Property(self.label_property, 'Has Label'))
-        # Has Comment
-        has_has_comment = len([p for p in self.properties if p.uri == self.comment_property]) >= 1
-        if not has_has_comment:
-            self.properties.append(Property(self.comment_property, 'Has Comment'))
-
 
     def get_classes(self, graph: Graph, prefixes: Prefixes) -> List[Resource]:
         """
