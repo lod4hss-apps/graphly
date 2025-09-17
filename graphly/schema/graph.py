@@ -209,7 +209,7 @@ class Graph:
             p = prepare(prefixes.lengthen(triple['p']))
 
             # Need to save blank nodes correctly
-            if triple['o'].startswith('_:'): o = triple['o']
+            if str(triple['o']).startswith('_:'): o = triple['o']
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
             else: o = prepare(prefixes.lengthen(triple['o']))
 
