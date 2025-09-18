@@ -145,6 +145,6 @@ class SHACL(Model):
             domain = self.find_class(resp['domain_class_uri'])
             range = self.find_class(resp['range_class_uri'])
             card_of = self.find_class(resp['card_of_class_uri'])
-            properties.append(Property(resp['uri'], resp['label'], "", domain, range, card_of))
+            properties.append(Property(resp['uri'], resp['label'], "", domain, range, card_of, order=resp['order'], min_count=resp['min_count'], max_count=resp['max_count']))
 
         return properties
