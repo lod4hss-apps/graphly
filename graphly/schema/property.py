@@ -81,7 +81,7 @@ class Property(Resource):
         Returns:
             bool: True if min_count is not zero (property is mandatory), False otherwise.
         """
-        return self.min_count != 0
+        return self.min_count and self.min_count != 0
 
 
     def to_dict(self, prefix='') -> Dict[str, Any]:
