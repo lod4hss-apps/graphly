@@ -249,7 +249,7 @@ class Model:
         """
         return [
             Resource('xsd:string', 'String', '', 'rdfs:Datatype'),
-            Resource('xsd:integer', 'Interger', '', 'rdfs:Datatype'),
+            Resource('xsd:integer', 'Integer', '', 'rdfs:Datatype'),
             Resource('xsd:decimal', 'Decimal', '', 'rdfs:Datatype'),
             Resource('xsd:float', 'Float', '', 'rdfs:Datatype'),
             Resource('xsd:double', 'Double', '', 'rdfs:Datatype'),
