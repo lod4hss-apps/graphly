@@ -53,6 +53,10 @@ class Model:
         self.label_property = label_property
         self.comment_property = comment_property
 
+        # Initialization
+        self.classes = []
+        self.properties = []
+
 
     def update(self, graph: Graph, prefixes: Prefixes) -> None:
         """
