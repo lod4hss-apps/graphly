@@ -202,7 +202,7 @@ class Sparql:
         chunks = ['\n'.join(lines[i:i + line_number]) for i in range(0, len(lines), line_number)]
 
         for i, chunk in enumerate(chunks):
-            print(f"> Uploading {len(chunks)} lines ({line_number * i} / {len(lines)})")
+            print(f"> Uploading {len(chunk)} lines ({line_number * i} / {len(lines)})")
             self.upload_nquads_chunk(chunk)
     
 
