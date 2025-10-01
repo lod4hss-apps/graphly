@@ -78,7 +78,10 @@ class Sparql:
 
         # If there is a response, and it is expected, parse and transform into a list of dict
         if parse_response:
-            return parse_sparql_json_response(response.json(), prefixes)
+            try:
+                return parse_sparql_json_response(response.json(), prefixes)
+            except:
+                return response.text
     
 
     def insert(self, triples: List[tuple] | tuple, graph_uri: str = None, prefixes: Prefixes = None) -> None:
@@ -202,7 +205,7 @@ class Sparql:
         chunks = ['\n'.join(lines[i:i + line_number]) for i in range(0, len(lines), line_number)]
 
         for i, chunk in enumerate(chunks):
-            print(f"> Uploading {len(chunk)} lines ({line_number * i} / {len(lines)})")
+            print(f"> Uploading {line_number} triples ({line_number * i} / {len(lines)})")
             self.upload_nquads_chunk(chunk)
     
 
