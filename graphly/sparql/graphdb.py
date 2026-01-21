@@ -101,3 +101,17 @@ class GraphDB(Sparql):
         # Make the request
         response = requests.post(url, data=turtle_content, headers=headers, auth=auth)
         response.raise_for_status()  # Raise error for bad responses
+
+    
+    @staticmethod
+    def from_dict(obj: dict[str, str]) -> 'Sparql':
+        """
+        Creates a Sparql (GraphDB) instance from a dictionary representation.
+
+        Parameters:
+            obj (dict[str, str]): A dictionary containing 'url', 'username', 'password' keys.
+
+        Returns:
+            GraphDB: An instance of the Sparql class with attributes populated from the dictionary.
+        """
+        return GraphDB(obj['url'], obj['username'], obj['password'])

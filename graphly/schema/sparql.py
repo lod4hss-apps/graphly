@@ -274,6 +274,20 @@ class Sparql:
         raise Exception(f'Method <upload_turtle> not implemented in {self.technology_name}')
     
 
+    def to_dict(self) -> dict[str, str]:
+        """
+        Converts the Sparql instance into a dictionary representation.
+
+        Returns:
+            dict[str, str]: A dictionary with keys 'technology', 'url', 'username', 'password' representing the Sparql endpoints and needed information to recreate it.
+        """
+        return {
+            "technology": self.technology_name,
+            "url": self.url,
+            "username": self.username,
+            "password": self.password
+        }
+
 
 def log_query(query: str, prefixes: Prefixes) -> None:
     """
