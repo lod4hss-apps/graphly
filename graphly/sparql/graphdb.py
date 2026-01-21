@@ -23,7 +23,7 @@ class GraphDB(Sparql):
     """
     
 
-    def __init__(self, url: str, username: str, password: str) -> None:
+    def __init__(self, url: str, username: str, password: str, name: str = None) -> None:
         """
         Initializes a GraphDB SPARQL wrapper instance.
 
@@ -31,8 +31,9 @@ class GraphDB(Sparql):
             url (str): The endpoint URL of the GraphDB SPARQL service.
             username (str): The username for authentication.
             password (str): The password for authentication.
+            name (str): The name given to the Sparql endpoint.
         """
-        super().__init__(url, username, password)
+        super().__init__(url, username, password, name)
         self.technology_name = 'GraphDB'
 
 
@@ -114,4 +115,4 @@ class GraphDB(Sparql):
         Returns:
             GraphDB: An instance of the Sparql class with attributes populated from the dictionary.
         """
-        return GraphDB(obj['url'], obj['username'], obj['password'])
+        return GraphDB(obj['url'], obj['username'], obj['password'], obj['name'])
