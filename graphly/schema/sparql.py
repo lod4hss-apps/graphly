@@ -24,15 +24,17 @@ class Sparql:
         endpoint_url (str): The URL of the SPARQL endpoint.
         username (str): Username for endpoint authentication.
         password (str): Password for endpoint authentication.
+        name (str): A name given to the endpoint
     """
 
     technology_name: str
     endpoint_url: str
     username: str
     password: str
+    name: str
 
 
-    def __init__(self, url: str, username: str, password: str) -> None:
+    def __init__(self, url: str, username: str, password: str, name: str = None) -> None:
         """
         Initializes a SPARQL wrapper instance with connection credentials.
 
@@ -44,6 +46,7 @@ class Sparql:
         self.url = url
         self.username = username
         self.password = password
+        self.name = name
 
 
     def run(self, text: str, prefixes: Prefixes = None, query_param: str = 'query', url_appendix: str = '', parse_response: bool = True) -> List[Dict] | None:
@@ -285,7 +288,8 @@ class Sparql:
             "technology": self.technology_name,
             "url": self.url,
             "username": self.username,
-            "password": self.password
+            "password": self.password,
+            "name": self.name
         }
 
 
