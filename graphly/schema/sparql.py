@@ -291,6 +291,21 @@ class Sparql:
             "password": self.password,
             "name": self.name
         }
+    
+    @staticmethod
+    def from_dict(obj: dict[str, str]) -> 'Sparql':
+        """
+        From a dictionary representation, instantiate a SPARQL endpoint.
+        Has to be implement by children classes
+
+        Returns:
+            dict[str, str]: A dictionary with keys 'technology', 'url', 'username', 'password', 'name' representing the Sparql endpoints and needed information to recreate it.
+
+        Raises:
+            Exception: Always, indicating that this method must be implemented in a subclass.
+        """
+        raise Exception(f'Method <from_dict> not implemented.')
+    
 
 
 def log_query(query: str, prefixes: Prefixes) -> None:
