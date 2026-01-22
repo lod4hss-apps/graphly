@@ -142,9 +142,20 @@ class SHACL(Model):
         # Transform into a list of Property instances, or an empty list
         properties = []
         for resp in response:
-            domain = self.find_class(resp['domain_class_uri'])
-            range = self.find_class(resp['range_class_uri'])
-            card_of = self.find_class(resp['card_of_class_uri'])
+            # Get domain and range
+            try:
+                domain = self.find_class(resp['domain_class_uri'])
+                range = self.find_class(resp['range_class_uri'])
+            except:
+                raise Exception('Graphly was not able to get domain class or range class for the following property: ' + resp['uri'] + ' - ' + resp['label'])
+            
+            # Get the class from which the property belongs
+            try:
+                card_of = self.find_class(resp['card_of_class_uri'])
+            except:
+                raise Exception('Graphly was not able to get concerned class (card of class URI) for the following property: ' + resp['uri'] + ' - ' + resp['label'])
+
+            # Create and add a new property
             properties.append(Property(resp['uri'], resp['label'], "", domain, range, card_of, order=resp['order'], min_count=resp['min_count'], max_count=resp['max_count']))
 
         return properties
