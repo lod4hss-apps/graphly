@@ -340,6 +340,7 @@ def log_query(url: str, query: str, prefixes: Prefixes) -> None:
     # DEBUG
     print('==============')
     print('SPARQL URL: ' + url)
+    print(' ')
     print(query)
 
         
