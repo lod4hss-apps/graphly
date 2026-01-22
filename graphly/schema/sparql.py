@@ -64,7 +64,7 @@ class Sparql:
         
         # Print the query in case of debug mode activated
         if os.getenv('GRAPHLY_MODE') == "debug": 
-            log_query(text, prefixes)
+            log_query(self.url, text, prefixes)
 
         # Build the full query to send to sparql server
         text = '\n'.join([line.strip() for line in text.split('\n') if line.strip()]) # Strip all lines and remove empty ones
@@ -308,11 +308,12 @@ class Sparql:
     
 
 
-def log_query(query: str, prefixes: Prefixes) -> None:
+def log_query(url: str, query: str, prefixes: Prefixes) -> None:
     """
     Logs a SPARQL query with proper formatting and prefixes.
 
     Args:
+        url (str): The URL of the endpoint
         query (str): The raw SPARQL query string.
         prefixes (Prefixes): A collection of prefixes to prepend to the query.
 
@@ -338,6 +339,7 @@ def log_query(query: str, prefixes: Prefixes) -> None:
 
     # DEBUG
     print('==============')
+    print('SPARQL URL: ' + url)
     print(query)
 
         
