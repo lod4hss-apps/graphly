@@ -203,13 +203,22 @@ class Sparql:
         Returns:
             None
         """
+        # Separate all lines in smaller chunks
         line_number = 10000
         lines = nquad_content.splitlines()
         chunks = ['\n'.join(lines[i:i + line_number]) for i in range(0, len(lines), line_number)]
 
-        for i, chunk in enumerate(chunks):
-            print(f"> Uploading {line_number} triples ({line_number * i} / {len(lines)})")
+        # For CLI information
+        uploaded_count = 0
+        lines_number = len(lines)
+
+        # Upload each chunk
+        for chunk in chunks:
+            chunk_len = len(chunk.splitlines())
+            print(f"> Uploaded {uploaded_count} triples / {lines_number} - Uploading {chunk_len} more...")
             self.upload_nquads_chunk(chunk)
+            uploaded_count += chunk_len
+        print(f"> Uploaded a total of {lines_number} triples")
     
 
     def upload_turtle(self, turtle_content: str, named_graph_uri: str) -> None:
@@ -223,8 +232,6 @@ class Sparql:
         Returns:
             None
         """
-
-        line_number = 10000
         lines = turtle_content.splitlines()
 
         # Extract prefixes
@@ -236,12 +243,23 @@ class Sparql:
             else:
                 triples.append(line)
         
+        # Separate all lines in smaller chunks
+        line_number = 10000
         prefixes = '\n'.join(prefixes) + "\n"
         chunks = ['\n'.join(triples[i:i + line_number]) for i in range(0, len(triples), line_number)]
 
-        for i, chunk in enumerate(chunks):
-            print(f"> Uploading ({line_number * i} / {len(triples)})")
+        # For CLI information
+        uploaded_count = 0
+        triples_number = len(triples)
+
+        # Upload each chunk
+        for chunk in chunks:
+            chunk_len = len(chunk.splitlines())
+            print(f"> Uploaded {uploaded_count} triples / {triples_number} - Uploading {chunk_len} more...")
             self.upload_turtle_chunk(prefixes + chunk, named_graph_uri)
+            uploaded_count += chunk_len
+        print(f"> Uploaded a total of {triples_number} triples")
+    
 
 
     def upload_nquads_chunk(self, nquad_content: str) -> None:
