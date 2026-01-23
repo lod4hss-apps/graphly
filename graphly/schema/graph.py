@@ -29,6 +29,7 @@ class Graph:
     sparql: Sparql
     uri: str
     uri_long: str
+    prefixes: Prefixes
 
     sparql_begin: str
     sparql_end: str
@@ -52,6 +53,7 @@ class Graph:
         """
         self.sparql = sparql
         self.uri = uri
+        self.prefixes = prefixes
         if prefixes: self.uri_long = prefixes.lengthen(uri)
         else: self.uri_long = uri
 
@@ -59,58 +61,54 @@ class Graph:
         self.sparql_end = "}" if self.uri else ""
 
 
-    def run(self, text: str, prefixes: Prefixes = None) -> List[Dict]:
+    def run(self, text: str) -> List[Dict]:
         """
         Executes a SPARQL query on this graph using the associated SPARQL endpoint.
 
         Args:
             text (str): The raw SPARQL query string.
-            prefixes (Prefixes, optional): A collection of prefixes to prepend to the query.
 
         Returns:
             List[Dict]: The parsed results of the query as a list of dictionaries.
         """
-        return self.sparql.run(text, prefixes)
+        return self.sparql.run(text, self.prefixes)
 
 
-    def insert(self, triples: List[tuple[str, str, str]] | tuple[str, str, str], prefixes: Prefixes = None) -> None:
+    def insert(self, triples: List[tuple[str, str, str]] | tuple[str, str, str]) -> None:
         """
         Inserts one or more RDF triples into this graph using the associated SPARQL endpoint.
 
         Args:
             triples (List[tuple[str, str, str]] | tuple[str, str, str]): A single triple or a list of triples to insert.
-            prefixes (Prefixes, optional): A collection of prefixes to include in the SPARQL query.
 
         Returns:
             None
         """
         if len(triples) != 0:
-            self.sparql.insert(triples, self.uri, prefixes)
+            self.sparql.insert(triples, self.uri, self.prefixes)
 
 
-    def delete(self, triples: List[tuple[str, str, str]] | tuple[str, str, str], prefixes: Prefixes = None) -> None:
+    def delete(self, triples: List[tuple[str, str, str]] | tuple[str, str, str]) -> None:
         """
         Deletes one or more RDF triples from this graph using the associated SPARQL endpoint.
 
         Args:
             triples (List[tuple[str, str, str]] | tuple[str, str, str]): A single triple or a list of triples to delete.
-            prefixes (Prefixes, optional): A collection of prefixes to include in the SPARQL query.
 
         Returns:
             None
         """
         if len(triples) != 0:
-            self.sparql.delete(triples, self.uri, prefixes)
+            self.sparql.delete(triples, self.uri, self.prefixes)
 
 
-    def dump_dict(self, prefixes: Prefixes = None) -> list[dict]:
+    def dump_dict(self) -> list[dict]:
         """
         Dumps all triples from this graph as a list of dictionaries.
 
         The method retrieves triples in batches to handle large datasets.
 
         Args:
-            prefixes (Prefixes, optional): A collection of prefixes to include in the SPARQL query.
 
         Returns:
             list[dict]: A list of dictionaries, each representing a triple with keys 's', 'p', and 'o'.
@@ -137,7 +135,7 @@ class Graph:
         # Extract triples as long as they are coming
         while True:
             query_ = query + f"    OFFSET {offset}" # Append the offset
-            local_result = self.run(query_, prefixes) # Run the query
+            local_result = self.run(query_, self.prefixes) # Run the query
 
             # If there are results, add them, and prepare next request, otherwise, everything is extracted
             if len(local_result) > 0:
@@ -149,69 +147,67 @@ class Graph:
         return result
     
 
-    def dump_turtle(self, prefixes: Prefixes) -> str:
+    def dump_turtle(self) -> str:
         """
         Dumps all triples from this graph in Turtle serialization format.
 
         Args:
-            prefixes (Prefixes): A collection of prefixes to include in the Turtle output.
 
         Returns:
             str: The RDF data serialized in Turtle format, including prefixes.
         """
         # Get all the triples
-        triples = self.dump_dict(prefixes)
+        triples = self.dump_dict(self.prefixes)
 
         # Format prefixes for turtle file
-        content = '\n'.join(list(map(lambda prefix: prefix.to_turtle(), prefixes))) + '\n\n'
+        content = '\n'.join(list(map(lambda prefix: prefix.to_turtle(), self.prefixes))) + '\n\n'
 
         # Build the output: add all triples
         for triple in triples:
             # Need to save blank nodes correctly
             if triple['s'].startswith('_:'): s = triple['s']
             elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: s = prepare(triple['s'], prefixes.shorts())
+            else: s = prepare(triple['s'], self.prefixes.shorts())
 
-            p = prepare(triple['p'], prefixes.shorts())
+            p = prepare(triple['p'], self.prefixes.shorts())
 
             # Need to save blank nodes correctly
             if triple['o'].startswith('_:'): o = triple['o']
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: o = prepare(triple['o'], prefixes.shorts())
+            else: o = prepare(triple['o'], self.prefixes.shorts())
 
             content += f"{s} {p} {o} .\n"
 
         return content
 
 
-    def dump_nquad(self, prefixes: Prefixes) -> str:
+    def dump_nquad(self) -> str:
         """
         Dumps all triples from this graph in N-Quads serialization format.
 
         Args:
-            prefixes (Prefixes): A collection of prefixes to expand and include in the output.
 
         Returns:
             str: The RDF data serialized in N-Quads format, including the graph URI if defined.
         """
         # Get all the triples
-        triples = self.dump_dict(prefixes)
+        triples = self.dump_dict(self.prefixes)
 
         # Build the output: add all quads
-        graph_uri = prepare(prefixes.lengthen(self.uri)) + ' ' if self.uri else ''
+        graph_uri = prepare(self.prefixes.lengthen(self.uri)) + ' ' if self.uri else ''
         content = ""
         for triple in triples:
             # Need to save blank nodes correctly
             if triple['s'].startswith('_:'): s = triple['s']
             elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: s = prepare(prefixes.lengthen(triple['s']))
+            else: s = prepare(self.prefixes.lengthen(triple['s']))
 
-            p = prepare(prefixes.lengthen(triple['p']))
+            p = prepare(self.prefixes.lengthen(triple['p']))
 
             # Need to save blank nodes correctly
             if str(triple['o']).startswith('_:'): o = triple['o']
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: o = prepare(prefixes.lengthen(triple['o']))
+            else: o = prepare(self.prefixes.lengthen(triple['o']))
 
             content += f"{s} {p} {o} {graph_uri}.\n"
 

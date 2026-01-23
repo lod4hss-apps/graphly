@@ -4,9 +4,10 @@ from graphly.schema.property import Property
 from graphly.schema.prefix import Prefix
 from graphly.schema.prefixes import Prefixes
 from graphly.schema.resource import Resource
+from graphly.schema.sparql import Sparql
 
 
-class Model:
+class Model(Graph):
     """
     Represents an RDF/ontology model that allows querying classes and properties from a graph.
 
@@ -37,16 +38,20 @@ class Model:
     classes: List[Resource]
     properties: List[Property]
 
-
-    def __init__(self, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
+    def __init__(self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
         """
         Initialize a Model instance with default or custom property identifiers.
 
         Args:
+            sparql (Sparql): The SPARQL client used to execute queries.
+            uri (str, optional): The URI of the graph. Defaults to None.
+            prefixes (Prefixes, optional): Prefix mappings to expand or shorten URIs. Defaults to None.
             type_property (str, optional): The property used to define entity types. Defaults to 'rdf:type'.
             label_property (str, optional): The property used to define entity labels. Defaults to 'rdfs:label'.
             comment_property (str, optional): The property used to define entity comments or descriptions. Defaults to 'rdfs:comment'.
         """
+        super().__init__(sparql, uri, prefixes)
+
         # Set attributes
         self.framework_name = "No Framework" if not hasattr(self, 'framework_name') else self.framework_name
         self.type_property = type_property
@@ -58,7 +63,7 @@ class Model:
         self.properties = []
 
 
-    def update(self, graph: Graph, prefixes: Prefixes) -> None:
+    def update(self) -> None:
         """
         Update the Model by refreshing its classes and properties.
 
@@ -66,11 +71,11 @@ class Model:
         `get_classes()` and `get_properties()`, and updates the corresponding
         attributes of the Model.
         """
-        self.classes = self.get_classes(graph, prefixes)
-        self.properties = self.get_properties(graph, prefixes)
+        self.classes = self.get_classes()
+        self.properties = self.get_properties()
 
 
-    def get_classes(self, graph: Graph, prefixes: Prefixes) -> List[Resource]:
+    def get_classes(self) -> List[Resource]:
         """
         Retrieve all distinct classes from the given RDF graph.
 
@@ -80,7 +85,6 @@ class Model:
         `Resource` instances, each enriched with a `class_uri` of "owl:Class".
 
         Args:
-            graph (Graph): The RDF graph to query for classes.
 
         Returns:
             List[Resource]: A list of `Resource` objects representing the classes 
@@ -93,15 +97,15 @@ class Model:
                 ?uri 
                 (COALESCE(?label_, '') as ?label)
             WHERE {{
-                {graph.sparql_begin}
+                {self.sparql_begin}
                     ?subject {self.type_property} ?uri .
                     OPTIONAL {{ ?uri {self.label_property} ?label_ }}
-                {graph.sparql_end}
+                {self.sparql_end}
             }}
         """
 
         # Execute the query
-        response = graph.run(query, prefixes)
+        response = self.run(query)
 
         # Transform into a list of Resource instances, or an empty list
         classes = [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response] if response else []
@@ -112,7 +116,7 @@ class Model:
         return classes
     
 
-    def get_properties(self, graph: Graph, prefixes: Prefixes) -> List[Property]:
+    def get_properties(self) -> List[Property]:
         """
         Retrieve all distinct properties from the given RDF graph with accurate range types.
 
@@ -123,7 +127,6 @@ class Model:
         if it is a literal, the range is set to the literal's datatype.
 
         Args:
-            graph (Graph): The RDF graph to query for properties.
 
         Returns:
             List[Property]: A list of `Property` objects, each containing the property 
@@ -139,23 +142,23 @@ class Model:
                 (COALESCE(?label_, '') as ?label)
                 ?range_class_uri
             WHERE {{
-                {graph.sparql_begin}
+                {self.sparql_begin}
                     ?s ?uri ?o .
                     OPTIONAL {{ ?uri {self.label_property} ?label_}}
                     OPTIONAL {{ ?s {self.type_property} ?domain_class_uri_ . }}
                     OPTIONAL {{ ?o {self.type_property} ?range_class_uri_ . }}
-                {graph.sparql_end}
+                {self.sparql_end}
                 
                 FILTER (?uri != {self.type_property} && ?uri != {self.label_property} && ?uri != {self.comment_property})
                 BIND(IF(isIRI(?o), COALESCE(?range_class_uri_, ""), DATATYPE(?o)) as ?range_class_uri)
             }}
         """
 
-        if not prefixes.has('xsd'):
-            prefixes.add(Prefix('xsd', 'http://www.w3.org/2001/XMLSchema#'))
+        if not self.prefixes.has('xsd'):
+            self.prefixes.add(Prefix('xsd', 'http://www.w3.org/2001/XMLSchema#'))
 
         # Execute the query
-        response = graph.run(query, prefixes)
+        response = self.run(query)
 
         # Transform into a list of Property instances, or an empty list
         properties = []

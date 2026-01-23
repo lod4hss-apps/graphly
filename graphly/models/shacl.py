@@ -4,6 +4,7 @@ from graphly.schema.graph import Graph
 from graphly.schema.resource import Resource
 from graphly.schema.property import Property
 from graphly.schema.prefixes import Prefixes
+from graphly.schema.sparql import Sparql
 
 
 class SHACL(Model):
@@ -26,7 +27,7 @@ class SHACL(Model):
     """
     
 
-    def __init__(self, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
+    def __init__(self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
         """
         Initialize a SHACL-based Model instance with default or custom property identifiers.
 
@@ -34,15 +35,18 @@ class SHACL(Model):
         initialization of type, label, and comment properties to the base Model class.
 
         Args:
+            sparql (Sparql): The SPARQL client used to execute queries.
+            uri (str, optional): The URI of the graph. Defaults to None.
+            prefixes (Prefixes, optional): Prefix mappings to expand or shorten URIs. Defaults to None.
             type_property (str, optional): The property used to define entity types. Defaults to 'rdf:type'.
             label_property (str, optional): The property used to define entity labels. Defaults to 'rdfs:label'.
             comment_property (str, optional): The property used to define entity comments or descriptions. Defaults to 'rdfs:comment'.
         """
         self.framework_name = "SHACL"
-        super().__init__(type_property, label_property, comment_property)
+        super().__init__(sparql, uri, prefixes, type_property, label_property, comment_property)
 
     
-    def get_classes(self, graph: Graph, prefixes: Prefixes) -> List[Resource]:
+    def get_classes(self) -> List[Resource]:
         """
         Retrieve SHACL-defined classes from the given RDF graph.
 
@@ -51,8 +55,6 @@ class SHACL(Model):
         optional label. The results are returned as a list of `Resource` instances.
 
         Args:
-            graph (Graph): The RDF graph to query for SHACL classes.
-            prefixes (Prefixes): Prefixes to use in the SPARQL query.
 
         Returns:
             List[Resource]: A list of `Resource` objects representing the SHACL-defined 
@@ -66,16 +68,16 @@ class SHACL(Model):
                 ?uri 
                 (COALESCE(?label_, '') as ?label)
             WHERE {{
-                {graph.sparql_begin}
+                {self.sparql_begin}
                     ?node a sh:NodeShape .
                     ?node sh:name ?label_ .
                     ?node sh:targetClass ?uri .
-                {graph.sparql_end}
+                {self.sparql_end}
             }}
         """
 
         # Execute the query
-        response = graph.run(query, prefixes)
+        response = self.run(query)
 
         # Transform into a list of Resource instances, or an empty list
         classes = [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response] if response else []
@@ -86,7 +88,7 @@ class SHACL(Model):
         return classes
 
 
-    def get_properties(self, graph: Graph, prefixes: Prefixes) -> List[Property]:
+    def get_properties(self) -> List[Property]:
         """
         Retrieve SHACL-defined properties from the given RDF graph.
 
@@ -96,8 +98,6 @@ class SHACL(Model):
         as a list of `Property` instances.
 
         Args:
-            graph (Graph): The RDF graph to query for SHACL properties.
-            prefixes (Prefixes): Prefixes to use in the SPARQL query.
 
         Returns:
             List[Property]: A list of `Property` objects representing the SHACL-defined 
@@ -117,7 +117,7 @@ class SHACL(Model):
                 ?uri
                 (COALESCE(?range_class_uri_, ?datatype_, '') as ?range_class_uri)
             WHERE {{
-                {graph.sparql_begin}               
+                {self.sparql_begin}               
                     ?shape sh:property ?node .
                     ?node sh:path ?supposed_uri .  
                     OPTIONAL {{ ?shape sh:targetClass ?target_class_ . }}
@@ -132,12 +132,12 @@ class SHACL(Model):
                     BIND(IF(isBlank(?supposed_uri), '', ?target_class_) as ?domain_class_uri_)
                     BIND(IF(isBlank(?supposed_uri), ?target_class_, ?class) as ?range_class_uri_)
                     BIND(IF(isBlank(?supposed_uri), ?inverse_property_uri, ?supposed_uri) as ?uri)
-                {graph.sparql_end}
+                {self.sparql_end}
             }}
         """
 
         # Execute the query
-        response = graph.run(query, prefixes)
+        response = self.run(query)
         
         # Transform into a list of Property instances, or an empty list
         properties = []
