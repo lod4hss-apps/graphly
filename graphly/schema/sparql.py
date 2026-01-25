@@ -215,7 +215,8 @@ class Sparql:
         # Upload each chunk
         for chunk in chunks:
             chunk_len = len(chunk.splitlines())
-            print(f"> Uploaded {uploaded_count} triples / {lines_number} - Uploading {chunk_len} more...")
+            percent_done = round((uploaded_count / lines_number) * 100)
+            print(f"> Uploaded {uploaded_count} triples / {lines_number} ({percent_done} %) - Uploading {chunk_len} more...")
             self.upload_nquads_chunk(chunk)
             uploaded_count += chunk_len
         print(f"> Uploaded a total of {lines_number} triples")
@@ -255,7 +256,8 @@ class Sparql:
         # Upload each chunk
         for chunk in chunks:
             chunk_len = len(chunk.splitlines())
-            print(f"> Uploaded {uploaded_count} triples / {triples_number} - Uploading {chunk_len} more...")
+            percent_done = round((uploaded_count / triples_number) * 100)
+            print(f"> Uploaded {uploaded_count} triples / {triples_number} ({percent_done} %) - Uploading {chunk_len} more...")
             self.upload_turtle_chunk(prefixes + chunk, named_graph_uri)
             uploaded_count += chunk_len
         print(f"> Uploaded a total of {triples_number} triples")
