@@ -54,8 +54,8 @@ class Allegrograph(Sparql):
         Returns:
             None | list[dict]: The parsed query results for SELECT/ASK queries, or None for update operations.
         """
-        if prefixes is None: prefixes = Prefixes([self.additional_prefix])  
-        else: prefixes.add(self.additional_prefix)
+        if not prefixes.has(self.additional_prefix.short):
+            prefixes.add(self.additional_prefix)
         return super().run(text, prefixes)
 
 
