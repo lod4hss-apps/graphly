@@ -1,5 +1,5 @@
 [project]
-name = "logre"
+name = "graphly"
 version = "0.1.0"
 description = "Python code library to communicate with different graph technologies, graphs and ontologies."
 authors = [{name="Gaétan Muck"}]
