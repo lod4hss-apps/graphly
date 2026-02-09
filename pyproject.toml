@@ -1,4 +1,8 @@
 [project]
-name = "myproject"
+name = "logre"
 version = "0.1.0"
-dependencies = ["requests"]
+description = "Python code library to communicate with different graph technologies, graphs and ontologies."
+authors = [{name="Gaétan Muck"}]
+dependencies = []
+
+requires-python = ">=3.8"
