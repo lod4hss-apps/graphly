@@ -90,7 +90,7 @@ class Model(Graph):
         self.classes = []
         self.properties = []
 
-    def update(self) -> None:
+    def update(self, graph=None, prefixes=None) -> None:
         """
         Update the Model by refreshing its classes and properties.
 
@@ -98,6 +98,27 @@ class Model(Graph):
         `get_classes()` and `get_properties()`, and updates the corresponding
         attributes of the Model.
         """
+        if graph is not None:
+            if hasattr(graph, "sparql"):
+                self.sparql = graph.sparql
+            if hasattr(graph, "uri"):
+                self.uri = graph.uri
+            if hasattr(graph, "prefixes"):
+                self.prefixes = graph.prefixes
+            if hasattr(graph, "uri_long"):
+                self.uri_long = graph.uri_long
+            if hasattr(graph, "sparql_begin"):
+                self.sparql_begin = graph.sparql_begin
+            if hasattr(graph, "sparql_end"):
+                self.sparql_end = graph.sparql_end
+        if prefixes is not None:
+            self.prefixes = prefixes
+
+        if getattr(self, "sparql", None) is None:
+            self.classes = []
+            self.properties = []
+            return
+
         self.classes = self.get_classes()
         self.properties = self.get_properties()
 
