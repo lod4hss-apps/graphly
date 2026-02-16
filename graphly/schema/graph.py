@@ -93,7 +93,9 @@ class Graph:
             self.sparql.insert(triples, self.uri, self.prefixes)
 
     def delete(
-        self, triples: List[tuple[str, str, str]] | tuple[str, str, str]
+        self,
+        triples: List[tuple[str, str, str]] | tuple[str, str, str],
+        prefixes: Prefixes = None,
     ) -> None:
         """
         Deletes one or more RDF triples from this graph using the associated SPARQL endpoint.
@@ -105,7 +107,9 @@ class Graph:
             None
         """
         if len(triples) != 0:
-            self.sparql.delete(triples, self.uri, self.prefixes)
+            self.sparql.delete(
+                triples, self.uri, self.prefixes if prefixes is None else prefixes
+            )
 
     def dump_dict(self) -> list[dict]:
         """
