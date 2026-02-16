@@ -65,7 +65,7 @@ class Graph:
         )
         self.sparql_end = "}" if self.uri else ""
 
-    def run(self, text: str) -> List[Dict]:
+    def run(self, text: str, prefixes: Prefixes = None) -> List[Dict]:
         """
         Executes a SPARQL query on this graph using the associated SPARQL endpoint.
 
@@ -75,7 +75,7 @@ class Graph:
         Returns:
             List[Dict]: The parsed results of the query as a list of dictionaries.
         """
-        return self.sparql.run(text, self.prefixes)
+        return self.sparql.run(text, self.prefixes if prefixes is None else prefixes)
 
     def insert(
         self, triples: List[tuple[str, str, str]] | tuple[str, str, str]
