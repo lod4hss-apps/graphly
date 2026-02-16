@@ -25,10 +25,12 @@ class Allegrograph(Sparql):
         technology_name (str): Set to 'Allegrograph' to indicate the SPARQL technology.
     """
 
-    additional_prefix = Prefix('franzOption_defaultDatasetBehavior', 'franz:rdf')
-    
+    franz_prefix = Prefix("franz", "http://franz.com/ns/allegrograph/7.0/")
+    additional_prefix = Prefix("franzOption_defaultDatasetBehavior", "franz:rdf")
 
-    def __init__(self, url: str, username: str, password: str, name: str = None) -> None:
+    def __init__(
+        self, url: str, username: str, password: str, name: str = None
+    ) -> None:
         """
         Initializes an AllegroGraph SPARQL wrapper instance.
 
@@ -39,12 +41,11 @@ class Allegrograph(Sparql):
             name (str): The name given to the Sparql endpoint.
         """
         super().__init__(url, username, password, name)
-        self.technology_name = 'Allegrograph'
-
+        self.technology_name = "Allegrograph"
 
     def run(self, text: str, prefixes: Prefixes = None) -> None | list[dict]:
         """
-        Executes a SPARQL query against the AllegroGraph endpoint, automatically 
+        Executes a SPARQL query against the AllegroGraph endpoint, automatically
         including an additional prefix required by AllegroGraph.
 
         Args:
@@ -54,12 +55,22 @@ class Allegrograph(Sparql):
         Returns:
             None | list[dict]: The parsed query results for SELECT/ASK queries, or None for update operations.
         """
-        if not prefixes.has(self.additional_prefix.short):
-            prefixes.add(self.additional_prefix)
-        return super().run(text, prefixes)
+        required_prefixes = [self.franz_prefix, self.additional_prefix]
+        if prefixes is None:
+            local_prefixes = Prefixes(required_prefixes.copy())
+        else:
+            local_prefixes = Prefixes(prefixes.prefix_list.copy())
+            for prefix in required_prefixes:
+                if not local_prefixes.has(prefix.short):
+                    local_prefixes.add(prefix)
+        return super().run(text, local_prefixes)
 
-
-    def insert(self, triples: List[tuple] | tuple, graph_uri: str | None = None) -> None:
+    def insert(
+        self,
+        triples: List[tuple] | tuple,
+        graph_uri: str | None = None,
+        prefixes: Prefixes = None,
+    ) -> None:
         """
         Inserts one or more RDF triples into the AllegroGraph endpoint, ensuring uniqueness.
 
@@ -73,11 +84,10 @@ class Allegrograph(Sparql):
         Returns:
             None
         """
-        # Because we can not be sure user has set the option, 
+        # Because we can not be sure user has set the option,
         # Triples need to be deleted before inserting so that we make sure of unicity
-        self.delete(triples, graph_uri)
-        super().insert(triples, graph_uri) 
-
+        self.delete(triples, graph_uri, prefixes)
+        super().insert(triples, graph_uri, prefixes)
 
     def upload_nquads_chunk(self, nquad_content: str) -> None:
         """
@@ -90,7 +100,11 @@ class Allegrograph(Sparql):
             requests.HTTPError: If the HTTP request to the endpoint fails.
         """
         # Prepare query
-        url = self.url if not self.url.endswith('/sparql') else self.url.replace('/sparql', '')
+        url = (
+            self.url
+            if not self.url.endswith("/sparql")
+            else self.url.replace("/sparql", "")
+        )
         url = f"{url}/statements"
         headers = {"Content-Type": "application/n-quads"}
         auth = (self.username, self.password)
@@ -99,23 +113,31 @@ class Allegrograph(Sparql):
         response = requests.post(url, data=nquad_content, headers=headers, auth=auth)
         response.raise_for_status()
 
-
-    def upload_turtle_chunk(self, turtle_content: str, named_graph_uri: str = None) -> None:
+    def upload_turtle_chunk(
+        self, turtle_content: str, named_graph_uri: str = None
+    ) -> None:
         """
         Uploads a chunk of RDF data in Turtle format to the AllegroGraph endpoint.
 
         Args:
             turtle_content (str): A chunk of RDF data serialized in Turtle format.
-            named_graph_uri (str, optional): The URI of the named graph where the data 
+            named_graph_uri (str, optional): The URI of the named graph where the data
                 should be uploaded. If not provided, data is uploaded to the default graph.
 
         Raises:
             requests.HTTPError: If the HTTP request to the endpoint fails.
         """
         # Prepare query
-        url = self.url if not self.url.endswith('/sparql') else self.url.replace('/sparql', '')
+        url = (
+            self.url
+            if not self.url.endswith("/sparql")
+            else self.url.replace("/sparql", "")
+        )
         url = f"{url}/statements"
-        if named_graph_uri: url += "?context=" + prepare(named_graph_uri).replace(':', '%3A').replace('/', '%2F')
+        if named_graph_uri:
+            url += "?context=" + prepare(named_graph_uri).replace(":", "%3A").replace(
+                "/", "%2F"
+            )
         headers = {"Content-Type": "text/turtle"}
         auth = (self.username, self.password)
 
@@ -123,9 +145,8 @@ class Allegrograph(Sparql):
         response = requests.post(url, data=turtle_content, headers=headers, auth=auth)
         response.raise_for_status()  # Raise error for bad responses
 
-    
     @staticmethod
-    def from_dict(obj: dict[str, str]) -> 'Sparql':
+    def from_dict(obj: dict[str, str]) -> "Sparql":
         """
         Creates a Sparql (Allegrograph) instance from a dictionary representation.
 
@@ -135,4 +156,4 @@ class Allegrograph(Sparql):
         Returns:
             Allegrograph: An instance of the Sparql class with attributes populated from the dictionary.
         """
-        return Allegrograph(obj['url'], obj['username'], obj['password'], obj['name'])
+        return Allegrograph(obj["url"], obj["username"], obj["password"], obj["name"])
