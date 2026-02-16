@@ -28,7 +28,7 @@ class SHACL(Model):
 
     def __init__(
         self,
-        sparql: Sparql,
+        sparql: Sparql | None = None,
         uri: str = None,
         prefixes: Prefixes = None,
         type_property: str = "rdf:type",
