@@ -78,7 +78,9 @@ class Graph:
         return self.sparql.run(text, self.prefixes if prefixes is None else prefixes)
 
     def insert(
-        self, triples: List[tuple[str, str, str]] | tuple[str, str, str]
+        self,
+        triples: List[tuple[str, str, str]] | tuple[str, str, str],
+        prefixes: Prefixes = None,
     ) -> None:
         """
         Inserts one or more RDF triples into this graph using the associated SPARQL endpoint.
@@ -90,7 +92,9 @@ class Graph:
             None
         """
         if len(triples) != 0:
-            self.sparql.insert(triples, self.uri, self.prefixes)
+            self.sparql.insert(
+                triples, self.uri, self.prefixes if prefixes is None else prefixes
+            )
 
     def delete(
         self,
