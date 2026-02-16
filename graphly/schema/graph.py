@@ -34,8 +34,9 @@ class Graph:
     sparql_begin: str
     sparql_end: str
 
-
-    def __init__(self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None) -> None:
+    def __init__(
+        self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None
+    ) -> None:
         """
         Initialize a Graph instance with optional URI and prefixes for SPARQL queries.
 
@@ -54,12 +55,15 @@ class Graph:
         self.sparql = sparql
         self.uri = uri
         self.prefixes = prefixes
-        if prefixes: self.uri_long = prefixes.lengthen(uri)
-        else: self.uri_long = uri
+        if prefixes:
+            self.uri_long = prefixes.lengthen(uri)
+        else:
+            self.uri_long = uri
 
-        self.sparql_begin = "GRAPH " + prepare(self.uri, prefixes.shorts()) + " {" if self.uri else ""
+        self.sparql_begin = (
+            "GRAPH " + prepare(self.uri, prefixes.shorts()) + " {" if self.uri else ""
+        )
         self.sparql_end = "}" if self.uri else ""
-
 
     def run(self, text: str) -> List[Dict]:
         """
@@ -73,8 +77,9 @@ class Graph:
         """
         return self.sparql.run(text, self.prefixes)
 
-
-    def insert(self, triples: List[tuple[str, str, str]] | tuple[str, str, str]) -> None:
+    def insert(
+        self, triples: List[tuple[str, str, str]] | tuple[str, str, str]
+    ) -> None:
         """
         Inserts one or more RDF triples into this graph using the associated SPARQL endpoint.
 
@@ -87,8 +92,9 @@ class Graph:
         if len(triples) != 0:
             self.sparql.insert(triples, self.uri, self.prefixes)
 
-
-    def delete(self, triples: List[tuple[str, str, str]] | tuple[str, str, str]) -> None:
+    def delete(
+        self, triples: List[tuple[str, str, str]] | tuple[str, str, str]
+    ) -> None:
         """
         Deletes one or more RDF triples from this graph using the associated SPARQL endpoint.
 
@@ -100,7 +106,6 @@ class Graph:
         """
         if len(triples) != 0:
             self.sparql.delete(triples, self.uri, self.prefixes)
-
 
     def dump_dict(self) -> list[dict]:
         """
@@ -134,18 +139,17 @@ class Graph:
 
         # Extract triples as long as they are coming
         while True:
-            query_ = query + f"    OFFSET {offset}" # Append the offset
-            local_result = self.run(query_) # Run the query
+            query_ = query + f"    OFFSET {offset}"  # Append the offset
+            local_result = self.run(query_)  # Run the query
 
             # If there are results, add them, and prepare next request, otherwise, everything is extracted
             if len(local_result) > 0:
                 result += local_result
                 offset += step
-            else: 
+            else:
                 break
 
         return result
-    
 
     def dump_turtle(self) -> str:
         """
@@ -160,26 +164,37 @@ class Graph:
         triples = self.dump_dict()
 
         # Format prefixes for turtle file
-        content = '\n'.join(list(map(lambda prefix: prefix.to_turtle(), self.prefixes))) + '\n\n'
+        content = (
+            "\n".join(list(map(lambda prefix: prefix.to_turtle(), self.prefixes)))
+            + "\n\n"
+        )
 
         # Build the output: add all triples
         for triple in triples:
             # Need to save blank nodes correctly
-            if str(triple['s']).startswith('_:'): s = triple['s']
-            elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: s = prepare(triple['s'], self.prefixes.shorts())
+            subj = str(triple["s"])
+            obj = triple["o"]
 
-            p = prepare(triple['p'], self.prefixes.shorts())
+            if subj.startswith("_:"):
+                s = subj
+            elif triple["s_is_blank"] == "true":
+                s = f"_:{subj}"
+            else:
+                s = prepare(subj, self.prefixes.shorts())
 
-            # Need to save blank nodes correctly
-            if str(triple['o']).startswith('_:'): o = triple['o']
-            elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: o = prepare(triple['o'], self.prefixes.shorts())
+            p = prepare(str(triple["p"]), self.prefixes.shorts())
+
+            obj_str = str(obj)
+            if obj_str.startswith("_:"):
+                o = obj_str
+            elif triple["o_is_blank"] == "true":
+                o = f"_:{obj_str}"
+            else:
+                o = prepare(obj, self.prefixes.shorts())
 
             content += f"{s} {p} {o} .\n"
 
         return content
-
 
     def dump_nquad(self) -> str:
         """
@@ -194,25 +209,31 @@ class Graph:
         triples = self.dump_dict()
 
         # Build the output: add all quads
-        graph_uri = prepare(self.prefixes.lengthen(self.uri)) + ' ' if self.uri else ''
+        graph_uri = prepare(self.prefixes.lengthen(self.uri)) + " " if self.uri else ""
         content = ""
         for triple in triples:
             # Need to save blank nodes correctly
-            if str(triple['s']).startswith('_:'): s = triple['s']
-            elif triple['s_is_blank'] == 'true': s = f"_:{triple['s']}"
-            else: s = prepare(self.prefixes.lengthen(triple['s']))
+            subj = str(triple["s"])
+            if subj.startswith("_:"):
+                s = subj
+            elif triple["s_is_blank"] == "true":
+                s = f"_:{subj}"
+            else:
+                s = prepare(self.prefixes.lengthen(subj))
 
-            p = prepare(self.prefixes.lengthen(triple['p']))
+            p = prepare(self.prefixes.lengthen(triple["p"]))
 
             # Need to save blank nodes correctly
-            if str(triple['o']).startswith('_:'): o = triple['o']
-            elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
-            else: o = prepare(self.prefixes.lengthen(triple['o']))
+            if str(triple["o"]).startswith("_:"):
+                o = triple["o"]
+            elif triple["o_is_blank"] == "true":
+                o = f"_:{triple['o']}"
+            else:
+                o = prepare(self.prefixes.lengthen(triple["o"]))
 
             content += f"{s} {p} {o} {graph_uri}.\n"
 
         return content
-    
 
     def upload_turtle(self, turtle_content: str) -> None:
         """

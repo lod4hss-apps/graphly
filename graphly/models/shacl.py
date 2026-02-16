@@ -25,13 +25,20 @@ class SHACL(Model):
         get_classes: Retrieves SHACL-defined classes from a given RDF graph.
         get_properties: Retrieves SHACL-defined properties from a given RDF graph.
     """
-    
 
-    def __init__(self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
+    def __init__(
+        self,
+        sparql: Sparql,
+        uri: str = None,
+        prefixes: Prefixes = None,
+        type_property: str = "rdf:type",
+        label_property: str = "rdfs:label",
+        comment_property: str = "rdfs:comment",
+    ) -> None:
         """
         Initialize a SHACL-based Model instance with default or custom property identifiers.
 
-        This constructor sets the framework name to "SHACL" and delegates the 
+        This constructor sets the framework name to "SHACL" and delegates the
         initialization of type, label, and comment properties to the base Model class.
 
         Args:
@@ -43,22 +50,23 @@ class SHACL(Model):
             comment_property (str, optional): The property used to define entity comments or descriptions. Defaults to 'rdfs:comment'.
         """
         self.framework_name = "SHACL"
-        super().__init__(sparql, uri, prefixes, type_property, label_property, comment_property)
+        super().__init__(
+            sparql, uri, prefixes, type_property, label_property, comment_property
+        )
 
-    
     def get_classes(self) -> List[Resource]:
         """
         Retrieve SHACL-defined classes from the given RDF graph.
 
-        Constructs and executes a SPARQL query to find all `sh:NodeShape` nodes 
-        and their associated target classes, extracting both the class URI and 
+        Constructs and executes a SPARQL query to find all `sh:NodeShape` nodes
+        and their associated target classes, extracting both the class URI and
         optional label. The results are returned as a list of `Resource` instances.
 
         Args:
 
         Returns:
-            List[Resource]: A list of `Resource` objects representing the SHACL-defined 
-            classes, each with a `class_uri` of "owl:Class". Returns an empty list if 
+            List[Resource]: A list of `Resource` objects representing the SHACL-defined
+            classes, each with a `class_uri` of "owl:Class". Returns an empty list if
             no classes are found.
         """
         # Prepare the query
@@ -80,28 +88,31 @@ class SHACL(Model):
         response = self.run(query)
 
         # Transform into a list of Resource instances, or an empty list
-        classes = [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response] if response else []
+        classes = (
+            [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response]
+            if response
+            else []
+        )
 
         # Add Value classes
         classes += super().get_value_classes()
 
         return classes
 
-
     def get_properties(self) -> List[Property]:
         """
         Retrieve SHACL-defined properties from the given RDF graph.
 
-        Constructs and executes a SPARQL query to extract properties defined 
-        via SHACL shapes, including their target classes, labels, order, 
-        minimum and maximum counts, domain, and range. The results are returned 
+        Constructs and executes a SPARQL query to extract properties defined
+        via SHACL shapes, including their target classes, labels, order,
+        minimum and maximum counts, domain, and range. The results are returned
         as a list of `Property` instances.
 
         Args:
 
         Returns:
-            List[Property]: A list of `Property` objects representing the SHACL-defined 
-            properties, including domain and range class information. Returns an empty 
+            List[Property]: A list of `Property` objects representing the SHACL-defined
+            properties, including domain and range class information. Returns an empty
             list if no properties are found.
         """
         # Prepare the query
@@ -115,7 +126,8 @@ class SHACL(Model):
                 (COALESCE(?max_count_, '') as ?max_count)
                 (COALESCE(?domain_class_uri_, '') as ?domain_class_uri)
                 ?uri
-                (COALESCE(?range_class_uri_, ?datatype_, '') as ?range_class_uri)
+                (COALESCE(?range_class_uri_, '') as ?range_class_uri)
+                (COALESCE(?datatype_, '') as ?range_datatype)
             WHERE {{
                 {self.sparql_begin}               
                     ?shape sh:property ?node .
@@ -138,24 +150,49 @@ class SHACL(Model):
 
         # Execute the query
         response = self.run(query)
-        
+
         # Transform into a list of Property instances, or an empty list
         properties = []
         for resp in response:
             # Get domain and range
             try:
-                domain = self.find_class(resp['domain_class_uri'])
-                range = self.find_class(resp['range_class_uri'])
+                domain = self.find_class(resp["domain_class_uri"])
+                range_uri = resp.get("range_class_uri")
+                range_datatype = resp.get("range_datatype")
+                range_target = range_uri or range_datatype
+                range = self.find_class(range_target) if range_target else None
             except:
-                raise Exception('Graphly was not able to get domain class or range class for the following property: ' + resp['uri'] + ' - ' + resp['label'])
-            
+                raise Exception(
+                    "Graphly was not able to get domain class or range class for the following property: "
+                    + resp["uri"]
+                    + " - "
+                    + resp["label"]
+                )
+
             # Get the class from which the property belongs
             try:
-                card_of = self.find_class(resp['card_of_class_uri'])
+                card_of = self.find_class(resp["card_of_class_uri"])
             except:
-                raise Exception('Graphly was not able to get concerned class (card of class URI) for the following property: ' + resp['uri'] + ' - ' + resp['label'])
+                raise Exception(
+                    "Graphly was not able to get concerned class (card of class URI) for the following property: "
+                    + resp["uri"]
+                    + " - "
+                    + resp["label"]
+                )
 
             # Create and add a new property
-            properties.append(Property(resp['uri'], resp['label'], "", domain, range, card_of, order=resp['order'], min_count=resp['min_count'], max_count=resp['max_count']))
+            properties.append(
+                Property(
+                    resp["uri"],
+                    resp["label"],
+                    "",
+                    domain,
+                    range,
+                    card_of,
+                    order=resp["order"],
+                    min_count=resp["min_count"],
+                    max_count=resp["max_count"],
+                )
+            )
 
         return properties
