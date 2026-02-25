@@ -176,7 +176,7 @@ class Graph:
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
             else: o = prepare(triple['o'], self.prefixes.shorts())
 
-            content += f"{s} {p} {o} .\n"
+            content += f"{s} {p} {o.replace("'", "\\'")} .\n"
 
         return content
 
@@ -209,7 +209,7 @@ class Graph:
             elif triple['o_is_blank'] == 'true': o = f"_:{triple['o']}"
             else: o = prepare(self.prefixes.lengthen(triple['o']))
 
-            content += f"{s} {p} {o} {graph_uri}.\n"
+            content += f"{s} {p} {o.replace("'", "\\'")} {graph_uri}.\n"
 
         return content
     
