@@ -40,5 +40,5 @@ def prepare(uri_or_value: Any, prefixes_names: List[str] = []) -> str | None:
         return uri_or_value
     
     # Finally, if it comes at this point, uri_or_value should be a value, then add quotes:
-    uri_or_value = uri_or_value.replace("'", "\'")
+    uri_or_value = uri_or_value.replace("'", "\\'")
     return f"'{uri_or_value}'"
