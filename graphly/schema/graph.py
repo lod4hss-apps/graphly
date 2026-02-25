@@ -157,7 +157,7 @@ class Graph:
             str: The RDF data serialized in Turtle format, including prefixes.
         """
         # Get all the triples
-        triples = self.dump_dict(self.prefixes)
+        triples = self.dump_dict()
 
         # Format prefixes for turtle file
         content = '\n'.join(list(map(lambda prefix: prefix.to_turtle(), self.prefixes))) + '\n\n'
