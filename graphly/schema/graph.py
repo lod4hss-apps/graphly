@@ -135,7 +135,7 @@ class Graph:
         # Extract triples as long as they are coming
         while True:
             query_ = query + f"    OFFSET {offset}" # Append the offset
-            local_result = self.run(query_, self.prefixes) # Run the query
+            local_result = self.run(query_) # Run the query
 
             # If there are results, add them, and prepare next request, otherwise, everything is extracted
             if len(local_result) > 0:
@@ -191,7 +191,7 @@ class Graph:
             str: The RDF data serialized in N-Quads format, including the graph URI if defined.
         """
         # Get all the triples
-        triples = self.dump_dict(self.prefixes)
+        triples = self.dump_dict()
 
         # Build the output: add all quads
         graph_uri = prepare(self.prefixes.lengthen(self.uri)) + ' ' if self.uri else ''
