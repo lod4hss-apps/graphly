@@ -112,12 +112,12 @@ class Sparql:
         chunked_triples = [triples[i: i + chunk_size] for i in range(0, len(triples), chunk_size)]
 
         # Prepare the query - Graph part
-        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
+        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else []) + " {" if graph_uri else ""
         graph_sparql_close = "}" if graph_uri else ""
         
         for small_triples in chunked_triples:
             # Transform the triples into strings, and make the query "pretty"
-            triples_str = '\n                        '.join([prepare_triple(triple, prefixes.shorts() if prefixes else None) for triple in small_triples])
+            triples_str = '\n                        '.join([prepare_triple(triple, prefixes.shorts() if prefixes else []) for triple in small_triples])
 
             # Prepare the query
             text = """
@@ -152,10 +152,10 @@ class Sparql:
             triples = [triples]
 
         # Transform the triples into strings
-        triples_str = '\n                    '.join([prepare_triple(triple, prefixes.shorts() if prefixes else None) for triple in triples])
+        triples_str = '\n                    '.join([prepare_triple(triple, prefixes.shorts() if prefixes else []) for triple in triples])
 
         # Prepare query
-        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else None) + " {" if graph_uri else ""
+        graph_sparql_open = "GRAPH " + prepare(graph_uri, prefixes.shorts() if prefixes else []) + " {" if graph_uri else ""
         graph_sparql_close = "}" if graph_uri else ""
         text = """
             # graphly.schema.sparql.delete

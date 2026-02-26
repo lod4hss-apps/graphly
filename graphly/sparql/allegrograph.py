@@ -80,7 +80,7 @@ class Allegrograph(Sparql):
             
         # Because we can not be sure user has set the option, 
         # Triples need to be deleted before inserting so that we make sure of unicity
-        self.delete(triples, graph_uri)
+        self.delete(triples, graph_uri, prefixes)
         super().insert(triples, graph_uri, prefixes) 
 
 
