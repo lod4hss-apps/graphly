@@ -60,7 +60,7 @@ class Allegrograph(Sparql):
         return super().run(text, prefixes)
 
 
-    def insert(self, triples: List[tuple] | tuple, graph_uri: str | None = None) -> None:
+    def insert(self, triples: List[tuple] | tuple, graph_uri: str | None = None, prefixes: Prefixes = None) -> None:
         """
         Inserts one or more RDF triples into the AllegroGraph endpoint, ensuring uniqueness.
 
@@ -74,10 +74,14 @@ class Allegrograph(Sparql):
         Returns:
             None
         """
+        if not prefixes.has(self.additional_prefix.short):
+            if not Prefixes: prefixes = Prefixes()
+            prefixes.add(self.additional_prefix)
+            
         # Because we can not be sure user has set the option, 
         # Triples need to be deleted before inserting so that we make sure of unicity
         self.delete(triples, graph_uri)
-        super().insert(triples, graph_uri) 
+        super().insert(triples, graph_uri, prefixes) 
 
 
     def upload_nquads_chunk(self, nquad_content: str) -> None:
