@@ -154,37 +154,29 @@ class SHACL(Model):
         # Transform into a list of Property instances, or an empty list
         properties = []
         for resp in response:
-            # Get domain and range
-            try:
-                domain = self.find_class(resp["domain_class_uri"])
-                range_uri = resp.get("range_class_uri")
-                range_datatype = resp.get("range_datatype")
-                range_target = range_uri or range_datatype
-                range = self.find_class(range_target) if range_target else None
-            except:
-                raise Exception(
-                    "Graphly was not able to get domain class or range class for the following property: "
-                    + resp["uri"]
-                    + " - "
-                    + resp["label"]
-                )
+            uri = resp.get("uri")
+            if not uri:
+                continue
 
-            # Get the class from which the property belongs
-            try:
-                card_of = self.find_class(resp["card_of_class_uri"])
-            except:
-                raise Exception(
-                    "Graphly was not able to get concerned class (card of class URI) for the following property: "
-                    + resp["uri"]
-                    + " - "
-                    + resp["label"]
-                )
+            domain_class_uri = resp.get("domain_class_uri") or ""
+            range_class_uri = resp.get("range_class_uri") or ""
+            range_datatype = resp.get("range_datatype") or ""
+            range_target = range_class_uri or range_datatype
+
+            domain = self.find_class(domain_class_uri) if domain_class_uri else None
+            range = self.find_class(range_target) if range_target else None
+
+            card_of_class_uri = resp.get("card_of_class_uri") or ""
+            card_of = (
+                self.find_class(card_of_class_uri) if card_of_class_uri else domain
+            )
 
             # Create and add a new property
+            label = resp.get("label") or uri
             properties.append(
                 Property(
-                    resp["uri"],
-                    resp["label"],
+                    uri,
+                    label,
                     "",
                     domain,
                     range,
