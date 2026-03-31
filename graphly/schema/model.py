@@ -38,7 +38,15 @@ class Model(Graph):
     classes: List[Resource]
     properties: List[Property]
 
-    def __init__(self, sparql: Sparql, uri: str = None, prefixes: Prefixes = None, type_property: str = 'rdf:type', label_property: str = "rdfs:label", comment_property: str = "rdfs:comment") -> None:
+    def __init__(
+        self,
+        sparql: Sparql | str | None = None,
+        uri: str | None = None,
+        prefixes: Prefixes | str | None = None,
+        type_property: str = "rdf:type",
+        label_property: str = "rdfs:label",
+        comment_property: str = "rdfs:comment",
+    ) -> None:
         """
         Initialize a Model instance with default or custom property identifiers.
 
@@ -50,10 +58,30 @@ class Model(Graph):
             label_property (str, optional): The property used to define entity labels. Defaults to 'rdfs:label'.
             comment_property (str, optional): The property used to define entity comments or descriptions. Defaults to 'rdfs:comment'.
         """
-        super().__init__(sparql, uri, prefixes)
+        legacy_mode = isinstance(sparql, str) or isinstance(prefixes, str)
+        if legacy_mode:
+            if isinstance(sparql, str):
+                type_property = sparql
+            if isinstance(uri, str):
+                label_property = uri
+            if isinstance(prefixes, str):
+                comment_property = prefixes
+
+            self.sparql = None
+            self.uri = None
+            self.prefixes = Prefixes([])
+            self.uri_long = None
+            self.sparql_begin = ""
+            self.sparql_end = ""
+        else:
+            super().__init__(sparql, uri, prefixes)
 
         # Set attributes
-        self.framework_name = "No Framework" if not hasattr(self, 'framework_name') else self.framework_name
+        self.framework_name = (
+            "No Framework"
+            if not hasattr(self, "framework_name")
+            else self.framework_name
+        )
         self.type_property = type_property
         self.label_property = label_property
         self.comment_property = comment_property
@@ -62,8 +90,7 @@ class Model(Graph):
         self.classes = []
         self.properties = []
 
-
-    def update(self) -> None:
+    def update(self, graph=None, prefixes=None) -> None:
         """
         Update the Model by refreshing its classes and properties.
 
@@ -71,23 +98,43 @@ class Model(Graph):
         `get_classes()` and `get_properties()`, and updates the corresponding
         attributes of the Model.
         """
+        if graph is not None:
+            if hasattr(graph, "sparql"):
+                self.sparql = graph.sparql
+            if hasattr(graph, "uri"):
+                self.uri = graph.uri
+            if hasattr(graph, "prefixes"):
+                self.prefixes = graph.prefixes
+            if hasattr(graph, "uri_long"):
+                self.uri_long = graph.uri_long
+            if hasattr(graph, "sparql_begin"):
+                self.sparql_begin = graph.sparql_begin
+            if hasattr(graph, "sparql_end"):
+                self.sparql_end = graph.sparql_end
+        if prefixes is not None:
+            self.prefixes = prefixes
+
+        if getattr(self, "sparql", None) is None:
+            self.classes = []
+            self.properties = []
+            return
+
         self.classes = self.get_classes()
         self.properties = self.get_properties()
-
 
     def get_classes(self) -> List[Resource]:
         """
         Retrieve all distinct classes from the given RDF graph.
 
-        Constructs and executes a SPARQL query to identify unique class URIs 
-        based on the Model's `type_property`. Optionally retrieves class labels 
-        using the `label_property`. The results are returned as a list of 
+        Constructs and executes a SPARQL query to identify unique class URIs
+        based on the Model's `type_property`. Optionally retrieves class labels
+        using the `label_property`. The results are returned as a list of
         `Resource` instances, each enriched with a `class_uri` of "owl:Class".
 
         Args:
 
         Returns:
-            List[Resource]: A list of `Resource` objects representing the classes 
+            List[Resource]: A list of `Resource` objects representing the classes
             found in the graph. Returns an empty list if no classes are found.
         """
         # Prepare the query
@@ -108,29 +155,32 @@ class Model(Graph):
         response = self.run(query)
 
         # Transform into a list of Resource instances, or an empty list
-        classes = [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response] if response else []
+        classes = (
+            [Resource.from_dict({**obj, "class_uri": "owl:Class"}) for obj in response]
+            if response
+            else []
+        )
 
         # Add Value classes
         classes += self.get_value_classes()
 
         return classes
-    
 
     def get_properties(self) -> List[Property]:
         """
         Retrieve all distinct properties from the given RDF graph with accurate range types.
 
         Constructs and executes a SPARQL query to identify property URIs used in the graph,
-        excluding the Model's `type_property`, `label_property`, and `comment_property`. 
-        For each property, the method retrieves its label, domain class, and range class. 
+        excluding the Model's `type_property`, `label_property`, and `comment_property`.
+        For each property, the method retrieves its label, domain class, and range class.
         If the object of a triple is an IRI, the range is set to the corresponding class URI;
         if it is a literal, the range is set to the literal's datatype.
 
         Args:
 
         Returns:
-            List[Property]: A list of `Property` objects, each containing the property 
-            resource, its domain class (if any), and its range class (if any). 
+            List[Property]: A list of `Property` objects, each containing the property
+            resource, its domain class (if any), and its range class (if any).
             Returns an empty list if no properties are found.
         """
         # Prepare the query
@@ -154,8 +204,8 @@ class Model(Graph):
             }}
         """
 
-        if not self.prefixes.has('xsd'):
-            self.prefixes.add(Prefix('xsd', 'http://www.w3.org/2001/XMLSchema#'))
+        if not self.prefixes.has("xsd"):
+            self.prefixes.add(Prefix("xsd", "http://www.w3.org/2001/XMLSchema#"))
 
         # Execute the query
         response = self.run(query)
@@ -163,18 +213,17 @@ class Model(Graph):
         # Transform into a list of Property instances, or an empty list
         properties = []
         for resp in response:
-            domain = self.find_class(resp['domain_class_uri'])
-            range = self.find_class(resp['range_class_uri'])
-            properties.append(Property(resp['uri'], resp['label'], "", domain, range))
+            domain = self.find_class(resp["domain_class_uri"])
+            range = self.find_class(resp["range_class_uri"])
+            properties.append(Property(resp["uri"], resp["label"], "", domain, range))
 
         return properties
-    
 
     def find_class(self, class_uri: str) -> Resource | None:
         """
         Find a class in the Model by its URI.
 
-        Searches through the Model's `classes` attribute for a class whose 
+        Searches through the Model's `classes` attribute for a class whose
         `uri` matches the given `class_uri`.
 
         Args:
@@ -183,10 +232,14 @@ class Model(Graph):
         Returns:
             Resource | None: The matching `Resource` object if found, otherwise None.
         """
-        return next((klass for klass in self.classes if klass.uri == class_uri), Resource(class_uri))
+        return next(
+            (klass for klass in self.classes if klass.uri == class_uri),
+            Resource(class_uri),
+        )
 
-
-    def find_properties(self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None) -> List[Property]:
+    def find_properties(
+        self, prop_uri: str, domain_class_uri: str = None, range_class_uri: str = None
+    ) -> List[Property]:
         """
         Find properties matching the given URI, optionally filtered by domain and/or range.
 
@@ -196,34 +249,43 @@ class Model(Graph):
             range_class_uri (str, optional): The URI of the range class to filter by. Defaults to None.
 
         Returns:
-            List[Property]: A list of matching properties. If none are found, 
+            List[Property]: A list of matching properties. If none are found,
             a new Property with the given URI is returned in a list.
         """
         # Narrow down the properties if domain and/or range is provided
         filtered = self.properties
         if domain_class_uri:
-            filtered = [prop for prop in filtered if prop.domain and prop.domain.uri == domain_class_uri]
+            filtered = [
+                prop
+                for prop in filtered
+                if prop.domain and prop.domain.uri == domain_class_uri
+            ]
         if range_class_uri:
-            filtered = [prop for prop in filtered if prop.range and prop.range.uri == range_class_uri]
-        
+            filtered = [
+                prop
+                for prop in filtered
+                if prop.range and prop.range.uri == range_class_uri
+            ]
+
         # Find all properties satisfying the conditions
         # They can be multiple because some times a class has mutiple times the same property
         # but with different ranges
         target = [prop for prop in filtered if prop.uri == prop_uri]
 
-        if len(target) == 0: 
+        if len(target) == 0:
             return [Property(prop_uri)]
-        else: 
+        else:
             return target
 
-
-    def is_prop_mandatory(self, prop_uri: str, card_of_uri: str = None) -> Property | None:
+    def is_prop_mandatory(
+        self, prop_uri: str, card_of_uri: str = None
+    ) -> Property | None:
         """
         Check if a property is mandatory in the Model.
 
         Searches the Model's `properties` for a property matching the given URI.
-        If `card_of_uri` is provided, only considers properties associated with 
-        that specific card. Raises an exception if multiple matching properties 
+        If `card_of_uri` is provided, only considers properties associated with
+        that specific card. Raises an exception if multiple matching properties
         are found (should not).
 
         Args:
@@ -234,48 +296,56 @@ class Model(Graph):
             Property | None: The matching `Property` object if found, otherwise None.
         """
         # Select only right properties, and if case of a card_of, select only the one with the right card
-        selection = [p for p in self.properties if p.uri == prop_uri and (card_of_uri is not None or p.card_of.uri ==card_of_uri)]
+        selection = [
+            p
+            for p in self.properties
+            if p.uri == prop_uri
+            and (card_of_uri is not None or p.card_of.uri == card_of_uri)
+        ]
 
-        if len(selection) > 1: 
-            raise Exception(f'Too much properties retrieved for prop_uri = {prop_uri}, and card_or_uri = {card_of_uri}')
-        
+        if len(selection) > 1:
+            raise Exception(
+                f"Too much properties retrieved for prop_uri = {prop_uri}, and card_or_uri = {card_of_uri}"
+            )
+
         return selection[0] if len(selection) > 0 else None
-
 
     @staticmethod
     def get_value_classes() -> List[Resource]:
         """
         Return a predefined list of common XSD and RDF datatype resources.
 
-        This static method provides `Resource` instances representing standard 
-        value types, including strings, numbers, booleans, dates, durations, 
+        This static method provides `Resource` instances representing standard
+        value types, including strings, numbers, booleans, dates, durations,
         and binary or language types, with their corresponding URIs and labels.
 
         Returns:
             List[Resource]: A list of `Resource` objects for common RDF/XSD datatypes.
         """
         return [
-            Resource('xsd:string', 'String', '', 'rdfs:Datatype'),
-            Resource('xsd:integer', 'Integer', '', 'rdfs:Datatype'),
-            Resource('xsd:decimal', 'Decimal', '', 'rdfs:Datatype'),
-            Resource('xsd:float', 'Float', '', 'rdfs:Datatype'),
-            Resource('xsd:double', 'Double', '', 'rdfs:Datatype'),
-            Resource('xsd:boolean', 'Boolean', '', 'rdfs:Datatype'),
-            Resource('xsd:dateTime', 'dateTime', '', 'rdfs:Datatype'),
-            Resource('xsd:date', 'Date', '', 'rdfs:Datatype'),
-            Resource('xsd:time', 'Time', '', 'rdfs:Datatype'),
-            Resource('xsd:gYear', 'G Year', '', 'rdfs:Datatype'),
-            Resource('xsd:gMonth', 'G Month', '', 'rdfs:Datatype'),
-            Resource('xsd:gDay', 'G Day', '', 'rdfs:Datatype'),
-            Resource('xsd:gYearMonth', 'G Year Month', '', 'rdfs:Datatype'),
-            Resource('xsd:gMonthDay', 'G Month Day', '', 'rdfs:Datatype'),
-            Resource('xsd:duration', 'Duration', '', 'rdfs:Datatype'),
-            Resource('xsd:dayTimeDuration', 'Day Time Duration', '', 'rdfs:Datatype'),
-            Resource('xsd:yearMonthDuration', 'Year Month Duration', '', 'rdfs:Datatype'),
-            Resource('xsd:hexBinary', 'Hexadecimal Binary', '', 'rdfs:Datatype'),
-            Resource('xsd:base64Binary', 'Base64 Binary', '', 'rdfs:Datatype'),
-            Resource('xsd:anyURI', '', 'Any URI', 'rdfs:Datatype'),
-            Resource('xsd:language', 'Language', '', 'rdfs:Datatype'),
-            Resource('xsd:langString', 'Language String', '', 'rdfs:Datatype'),
-            Resource('rdf:HTML', 'HTML', '', 'rdfs:Datatype'),
+            Resource("xsd:string", "String", "", "rdfs:Datatype"),
+            Resource("xsd:integer", "Integer", "", "rdfs:Datatype"),
+            Resource("xsd:decimal", "Decimal", "", "rdfs:Datatype"),
+            Resource("xsd:float", "Float", "", "rdfs:Datatype"),
+            Resource("xsd:double", "Double", "", "rdfs:Datatype"),
+            Resource("xsd:boolean", "Boolean", "", "rdfs:Datatype"),
+            Resource("xsd:dateTime", "dateTime", "", "rdfs:Datatype"),
+            Resource("xsd:date", "Date", "", "rdfs:Datatype"),
+            Resource("xsd:time", "Time", "", "rdfs:Datatype"),
+            Resource("xsd:gYear", "G Year", "", "rdfs:Datatype"),
+            Resource("xsd:gMonth", "G Month", "", "rdfs:Datatype"),
+            Resource("xsd:gDay", "G Day", "", "rdfs:Datatype"),
+            Resource("xsd:gYearMonth", "G Year Month", "", "rdfs:Datatype"),
+            Resource("xsd:gMonthDay", "G Month Day", "", "rdfs:Datatype"),
+            Resource("xsd:duration", "Duration", "", "rdfs:Datatype"),
+            Resource("xsd:dayTimeDuration", "Day Time Duration", "", "rdfs:Datatype"),
+            Resource(
+                "xsd:yearMonthDuration", "Year Month Duration", "", "rdfs:Datatype"
+            ),
+            Resource("xsd:hexBinary", "Hexadecimal Binary", "", "rdfs:Datatype"),
+            Resource("xsd:base64Binary", "Base64 Binary", "", "rdfs:Datatype"),
+            Resource("xsd:anyURI", "", "Any URI", "rdfs:Datatype"),
+            Resource("xsd:language", "Language", "", "rdfs:Datatype"),
+            Resource("xsd:langString", "Language String", "", "rdfs:Datatype"),
+            Resource("rdf:HTML", "HTML", "", "rdfs:Datatype"),
         ]
