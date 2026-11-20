@@ -1,7 +1,12 @@
-from typing import List, Any
+import re
+from typing import Any, List, Optional
 
 
-def prepare(uri_or_value: Any, prefixes_names: List[str] = []) -> str | None:
+ABSOLUTE_IRI_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+INVALID_IRI_CHARS_RE = re.compile(r'[\s<>"{}|^`\\]')
+
+
+def prepare(uri_or_value: Any, prefixes_names: Optional[List[str]] = None) -> Optional[str]:
     """
     Prepare a URI, variable, or literal value for use in a SPARQL query.
 
@@ -14,31 +19,48 @@ def prepare(uri_or_value: Any, prefixes_names: List[str] = []) -> str | None:
             - Full URIs are wrapped in angle brackets.
             - Recognized prefixed names are returned unchanged.
             - Variables (starting with '?') and numbers are returned as-is.
-            - Literals are wrapped in single quotes.
-            - None if the input is falsy.
+            - Literals are wrapped in single quotes and escaped.
+
+    Raises:
+        ValueError: If an absolute IRI contains invalid characters.
     """
-    # If None is given, make the call transparent
-    if not uri_or_value: return None
+    prefixes_names = prefixes_names or []
+
+    if uri_or_value is None:
+        return None
+
     # Check if it is the "a" keyword: if yes, nothing to do 
     if uri_or_value == "a": return uri_or_value
     # If it is a numerical value: nothing to do
-    if isinstance(uri_or_value, (int, float, complex)): return str(uri_or_value)
+    if isinstance(uri_or_value, bool):
+        return "true" if uri_or_value else "false"
+    if isinstance(uri_or_value, (int, float)):
+        return str(uri_or_value)
+    if isinstance(uri_or_value, complex):
+        raise ValueError("Cannot serialize complex numbers as SPARQL terms")
     # If at this point it is not a string, transform it into string
     if not isinstance(uri_or_value, str): uri_or_value = str(uri_or_value)
     # Check if it is a variable: if yes, nothing to do
     if uri_or_value.startswith('?'): return uri_or_value
 
-    # Make it work it is a real URI
-    # "://" are not added to also cover httpS in a single call
-    # This is here to make sure "http" is not taken as a prefix
-    if uri_or_value.startswith('http'):
-        return f"<{uri_or_value}>"
-    
     # Look for prefixes: if it has one, nothing to do
     prefix = uri_or_value[0:uri_or_value.find(':')]
     if prefix in prefixes_names:
         return uri_or_value
-    
+
+    if ABSOLUTE_IRI_RE.match(uri_or_value):
+        if INVALID_IRI_CHARS_RE.search(uri_or_value):
+            raise ValueError(f"Invalid absolute IRI: {uri_or_value!r}")
+        return f"<{uri_or_value}>"
+
     # Finally, if it comes at this point, uri_or_value should be a value, then add quotes:
-    uri_or_value = uri_or_value.replace("'", "\\'")
+    uri_or_value = (
+        uri_or_value.replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
+        .replace("\b", "\\b")
+        .replace("\f", "\\f")
+    )
     return f"'{uri_or_value}'"

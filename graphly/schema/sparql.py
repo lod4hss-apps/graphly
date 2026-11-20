@@ -169,6 +169,44 @@ class Sparql:
         # Execute
         self.run(text, prefixes)
 
+    def replace(
+        self,
+        triples_to_delete: List[tuple],
+        triples_to_insert: List[tuple],
+        graph_uri: str = None,
+        prefixes: Prefixes = None,
+    ) -> None:
+        """Atomically replace triples in a graph with a single SPARQL Update."""
+        if not triples_to_delete and not triples_to_insert:
+            return
+
+        prefixes_names = prefixes.shorts() if prefixes else []
+        graph_sparql_open = (
+            "GRAPH " + prepare(graph_uri, prefixes_names) + " {" if graph_uri else ""
+        )
+        graph_sparql_close = "}" if graph_uri else ""
+        deleted = "\n                    ".join(
+            prepare_triple(triple, prefixes_names) for triple in triples_to_delete
+        )
+        inserted = "\n                    ".join(
+            prepare_triple(triple, prefixes_names) for triple in triples_to_insert
+        )
+        text = f"""
+            # graphly.schema.sparql.replace
+            DELETE {{
+                {graph_sparql_open}
+                    {deleted}
+                {graph_sparql_close}
+            }}
+            INSERT {{
+                {graph_sparql_open}
+                    {inserted}
+                {graph_sparql_close}
+            }}
+            WHERE {{}}
+        """
+        self.run(text, prefixes)
+
     
     def dump(self) -> str:
         """

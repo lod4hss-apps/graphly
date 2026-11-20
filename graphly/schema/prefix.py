@@ -1,3 +1,22 @@
+import re
+
+
+_PNAME_LOCAL_SAFE_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._-]*$")
+
+
+def is_valid_sparql_pname_local(local: str) -> bool:
+    """
+    Validate a conservative safe subset of SPARQL prefixed-name local parts.
+
+    This intentionally rejects characters that commonly break query parsing
+    (for example `/`), and only accepts ASCII alphanumerics plus `_`, `-`, `.`.
+    """
+    if not local:
+        return False
+    if "/" in local:
+        return False
+    return _PNAME_LOCAL_SAFE_PATTERN.fullmatch(local) is not None
+
 
 class Prefix:
     """
@@ -27,7 +46,6 @@ class Prefix:
     short: str
     long: str
 
-
     def __init__(self, short: str, url: str) -> None:
         """
         Initializes a Prefix instance that maps a short prefix to a full URL.
@@ -39,7 +57,6 @@ class Prefix:
         self.short = short
         self.long = url
 
-
     def to_sparql(self) -> str:
         """
         Generates the SPARQL representation of the prefix.
@@ -48,7 +65,6 @@ class Prefix:
             str: A string in the format 'PREFIX short: <long>'.
         """
         return f"PREFIX {self.short}: <{self.long}>"
-    
 
     def to_turtle(self) -> str:
         """
@@ -59,23 +75,33 @@ class Prefix:
         """
         return f"@prefix {self.short}: <{self.long}> ."
 
-
     def shorten(self, uri: str) -> str:
         """
-        Shortens a full URI using the prefix, if the URI starts with the prefix's long URL.
+        Shortens a full URI using the prefix when it is SPARQL-safe.
+
+        The URI is shortened only when:
+        - the URI starts with this prefix long value, and
+        - the resulting local part matches a conservative SPARQL-safe subset.
+
+        If not, the full URI is returned unchanged.
 
         Parameters:
             uri (str): The full URI to be shortened.
 
         Returns:
-            str: The URI with the prefix replaced by its short form, or the original URI if the prefix does not match.
+            str: A prefixed name (`prefix:local`) or the original full URI.
         """
-        if self.long in uri:
-            if uri.startswith('<'): uri = uri[1:]
-            if uri.endswith('>'): uri = uri[:-1]
-            return uri.replace(self.long, self.short + ':')
-        return uri
-    
+        if uri.startswith("<") and uri.endswith(">"):
+            uri = uri[1:-1]
+
+        if not uri.startswith(self.long):
+            return uri
+
+        local = uri[len(self.long) :]
+        if not is_valid_sparql_pname_local(local):
+            return uri
+
+        return f"{self.short}:{local}"
 
     def lengthen(self, short: str) -> str:
         """
@@ -87,8 +113,7 @@ class Prefix:
         Returns:
             str: The full URI with the short prefix replaced by the long URL.
         """
-        return str(short).replace(self.short + ':', self.long)
-    
+        return str(short).replace(self.short + ":", self.long)
 
     def to_dict(self) -> dict[str, str]:
         """
@@ -97,14 +122,10 @@ class Prefix:
         Returns:
             dict[str, str]: A dictionary with keys 'short' and 'long' representing the prefix abbreviation and full URL.
         """
-        return {
-            "short": self.short,
-            "long": self.long
-        }
-    
+        return {"short": self.short, "long": self.long}
 
     @staticmethod
-    def from_dict(obj: dict[str, str]) -> 'Prefix':
+    def from_dict(obj: dict[str, str]) -> "Prefix":
         """
         Creates a Prefix instance from a dictionary representation.
 
@@ -114,4 +135,4 @@ class Prefix:
         Returns:
             Prefix: An instance of the Prefix class with attributes populated from the dictionary.
         """
-        return Prefix(obj['short'], obj['long'])
+        return Prefix(obj["short"], obj["long"])

@@ -1,4 +1,4 @@
-from typing import Iterator, List
+from typing import Iterator, List, Optional
 from graphly.schema.prefix import Prefix
 
 
@@ -32,16 +32,14 @@ class Prefixes:
 
     prefix_list: List[Prefix]
 
-
-    def __init__(self, prefix_list: List[Prefix] = []) -> None:
+    def __init__(self, prefix_list: Optional[List[Prefix]] = None) -> None:
         """
         Initializes a Prefixes container holding a list of Prefix instances.
 
         Parameters:
-            prefix_list (List[Prefix], optional): A list of Prefix objects to initialize the container. Defaults to an empty list.
+            prefix_list (Optional[List[Prefix]], optional): A list of Prefix objects to initialize the container.
         """
-        self.prefix_list = prefix_list
-
+        self.prefix_list = list(prefix_list) if prefix_list is not None else []
 
     def has(self, short: str) -> bool:
         """
@@ -58,7 +56,6 @@ class Prefixes:
                 return True
         return False
 
-
     def shorten(self, uri: str) -> str:
         """
         Shortens a full URI using the right prefix in the container.
@@ -73,8 +70,7 @@ class Prefixes:
         for p in self.prefix_list:
             to_return = p.shorten(to_return)
         return to_return
-    
-    
+
     def lengthen(self, uri: str) -> str:
         """
         Expands a shortened URI using the right prefix in the container to its full forms.
@@ -90,7 +86,6 @@ class Prefixes:
             to_return = p.lengthen(to_return)
         return to_return
 
-
     def add(self, prefix: Prefix) -> None:
         """
         Adds a new Prefix instance to the container.
@@ -99,7 +94,6 @@ class Prefixes:
             prefix (Prefix): The Prefix object to add to the list.
         """
         self.prefix_list.append(prefix)
-
 
     def remove(self, prefix: Prefix) -> None:
         """
@@ -112,8 +106,11 @@ class Prefixes:
         Returns:
             None
         """
-        self.prefix_list = [p for p in self.prefix_list if p.short != prefix.short and p.long != prefix.long]
-
+        self.prefix_list = [
+            p
+            for p in self.prefix_list
+            if p.short != prefix.short and p.long != prefix.long
+        ]
 
     def find(self, short: str) -> Prefix | None:
         """
@@ -129,10 +126,9 @@ class Prefixes:
             if p.short == short:
                 return p
         return None
-    
+
     def shorts(self) -> List[str]:
         return [p.short for p in self.prefix_list]
-
 
     def __len__(self) -> int:
         """
@@ -142,7 +138,6 @@ class Prefixes:
             int: The count of prefixes in the list.
         """
         return len(self.prefix_list)
-
 
     def __iter__(self) -> Iterator[Prefix]:
         """
